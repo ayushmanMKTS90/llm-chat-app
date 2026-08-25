@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-06T00:00:00Z",
+  "title": "Design System: Command Center",
+  "extensions": {
+    "colorMeta": {
+      "call-red":        { "role": "primary", "displayName": "Call Red", "canonical": "#c8381e", "tonalRamp": ["#3a0d05", "#5c1508", "#7d1e0b", "#9e280f", "#c8381e", "#e2573a", "#ef8c74", "#fbd8cf"] },
+      "stock-paper":     { "role": "neutral", "displayName": "Stock Paper", "canonical": "#f2eee3", "tonalRamp": ["#2a271c", "#4a4433", "#6b6350", "#8f8570", "#b7ac93", "#cfc7b0", "#e6e0cd", "#fbf9f2"] },
+      "ink":             { "role": "neutral", "displayName": "Ink", "canonical": "#1a1711", "tonalRamp": ["#000000", "#0f0d09", "#1a1711", "#2e2a20", "#45402f", "#6b6450", "#b7ac93", "#e6e0cd"] },
+      "projects-green":  { "role": "secondary", "displayName": "Projects Green", "canonical": "#1f7a45", "tonalRamp": ["#06170c", "#0c2f18", "#124726", "#1f7a45", "#2a9b5b", "#63c18a", "#a5ddbb", "#e3f5ea"] },
+      "email-blue":      { "role": "secondary", "displayName": "Email Blue", "canonical": "#2f55c4", "tonalRamp": ["#0a1330", "#15234f", "#1f3377", "#2f55c4", "#4d70d8", "#8aa2e8", "#c0cdf4", "#eef1fc"] },
+      "design-amber":    { "role": "secondary", "displayName": "Design Amber", "canonical": "#b07a11", "tonalRamp": ["#241800", "#453003", "#674b07", "#8a640b", "#b07a11", "#cf9c37", "#e5c37e", "#f8edd6"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero and section statements only; all-caps Big Shoulders 900." },
+      "headline": { "displayName": "Headline", "purpose": "Section heads, book title." },
+      "label": { "displayName": "Stamp/Label", "purpose": "Tabs, stamps, cue numbers, times, chips, call log — IBM Plex Mono." }
+    },
+    "shadows": [
+      { "name": "book-lift", "value": "0 2px 4px rgba(26,23,17,0.06), 0 18px 50px -18px rgba(26,23,17,0.28)", "purpose": "The single object shadow for the open prompt book (one-lift rule)." },
+      { "name": "go-ring", "value": "0 0 0 3px rgba(200,56,30,0.18)", "purpose": "Soft halo ring on the live GO lamp." }
+    ],
+    "motion": [
+      { "name": "stamp-in", "value": "cubic-bezier(0.16,1,0.3,1) 0.28s", "purpose": "Cue-stamp scale-in for GO and tab-panel reveals; exponential ease-out, never bounce." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "760px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action; the only saturated red on the page (call-lamp rule).",
+      "html": "<button class=\"ds-btn-primary\">Open your book</button>",
+      "css": ".ds-btn-primary { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: #fbf9f2; background: #c8381e; border: 1px solid transparent; border-radius: 6px; padding: 12px 18px; cursor: pointer; } .ds-btn-primary:hover { background: #a52c16; } .ds-btn-primary:focus-visible { outline: 3px solid #2f55c4; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action; ink outline, inverts on hover.",
+      "html": "<button class=\"ds-btn-ghost\">Start the setup guide</button>",
+      "css": ".ds-btn-ghost { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: #1a1711; background: transparent; border: 1px solid #1a1711; border-radius: 6px; padding: 12px 18px; cursor: pointer; } .ds-btn-ghost:hover { background: #1a1711; color: #f2eee3; } .ds-btn-ghost:focus-visible { outline: 3px solid #2f55c4; outline-offset: 2px; }"
+    },
+    {
+      "name": "Department Tab",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Divider-rail tab for departments and roles; active fills book-paper with a red rule.",
+      "html": "<button class=\"ds-tab\">01 Email</button>",
+      "css": ".ds-tab { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; color: #45402f; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 12px; cursor: pointer; } .ds-tab[aria-selected='true'] { background: #fbf9f2; color: #1a1711; border-color: #cfc7b0; } .ds-tab:hover { color: #1a1711; } .ds-tab:focus-visible { outline: 3px solid #2f55c4; outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Stamp",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Cue status: STANDBY outline, GO red-fill + ring, HOLD outlined amber.",
+      "html": "<span class=\"ds-status ds-status-go\">Go</span>",
+      "css": ".ds-status { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; border-radius: 4px; padding: 4px 8px; } .ds-status-go { color: #fbf9f2; background: #c8381e; box-shadow: 0 0 0 3px rgba(200,56,30,0.18); } .ds-status-hold { color: #b07a11; border: 1px solid #b07a11; } .ds-status-standby { color: #45402f; border: 1px solid #cfc7b0; }"
+    },
+    {
+      "name": "Open Prompt Book",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature hero object: ruled cue sheet under a tabbed top bar, the single lifted element.",
+      "html": "<div class=\"ds-book\"><div class=\"ds-book-top\">Prompt book · Project: Launch</div><table class=\"ds-cue\"><tr><th>Cue</th><th>Dept</th><th>Action</th><th>Status</th></tr><tr class=\"ds-cue-active\"><td>Q-02</td><td>Projects</td><td>Create sprint board</td><td><span class=\"ds-status ds-status-go\">Go</span></td></tr></table></div>",
+      "css": ".ds-book { background: #fbf9f2; border: 1px solid #cfc7b0; border-radius: 10px; box-shadow: 0 2px 4px rgba(26,23,17,0.06), 0 18px 50px -18px rgba(26,23,17,0.28); overflow: hidden; } .ds-book-top { font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 20px; padding: 14px 20px; border-bottom: 1px solid #d8d1b8; } .ds-cue { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; } .ds-cue th { text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b6450; padding: 14px 16px; border-bottom: 2px solid #1a1711; } .ds-cue td { padding: 13px 16px; border-bottom: 1px solid #d8d1b8; } .ds-cue-active { background: #fff6ef; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Stage Manager's Prompt Book",
+    "overview": "The Command Center is rendered as the working paper of a stage manager: one book that coordinates every department of a role. Every connected tool becomes a department (Email, Projects, Design), every workflow is a numbered cue (Q-01, Q-02), and every state is stamped, never charted. The surface is warm stock paper under ink hairlines, deliberately flat and printed, with the signal-red STANDBY/GO call lamp as the only saturated primary. The world is crafted for a busy professional who fights tab sprawl: it earns trust through the calm authority of a rehearsal document, not through dashboard chrome. Motion is one authored cue (standby to go), status is stamped, depth is a soft offset shadow for the object only. Translating every state to the book's vocabulary: tasks are cue lines, tools are departments, statuses are rubber-stamps, roles are tabbed dividers.",
+    "keyCharacteristics": [
+      "Printed-paper world: warm stock, ink hairlines, feTurbulence grain, no glass or glow except the red call lamp",
+      "Statuses are stamps and caps, never sparklines, progress rings, or charts",
+      "Departments are reusable-looking dot colors: blue=email, green=projects, amber=design",
+      "All display text is Big Shoulders, all cues/stamps/mono are IBM Plex Mono",
+      "A single authored cue motion (STANDBY → GO), respecting prefers-reduced-motion"
+    ],
+    "rules": [
+      { "name": "The Call-Lamp Rule", "body": "Red appears on the page only where a live call or primary action sits. Its rarity is the point — a page with scattered red has lost its single voice.", "section": "colors" },
+      { "name": "The One-Surface Rule", "body": "Shadows belong on exactly one hero object (the open book); everywhere else depth is line and stock, never a floating box.", "section": "colors" },
+      { "name": "The One-Lift Rule", "body": "One object carries shadow and depth; the rest are flat, printed paper. A second shadowed element says the world is 3D, and it isn't.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do label demo data (a rotated \"Synthetic demo\" stamp) and keep invented commercial claims absent.",
+      "Do use the red lamp once and once only.",
+      "Do track line count: type as the rule of the book (STANDBY / GO / HOLD), never a number chart.",
+      "Do lead sections with a heading that carries its own weight — no kicker above it."
+    ],
+    "donts": [
+      "Don't hide the persuasive hero inside a generic card stack or wrap it in hero-metric stats.",
+      "Don't introduce a system display face or gradient text.",
+      "Don't orbit a hero with a side stripe / hard offset shadow; depth is one lift.",
+      "Don't ship glyph/emoji icon tiles; a department is a dot and a label, not an icon grid."
+    ]
+  }
+}

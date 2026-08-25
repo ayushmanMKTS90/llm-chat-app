@@ -1,0 +1,19 @@
+{
+  "name": "pm-ai-terminal",
+  "version": "1.0.0",
+  "description": "Terminal as a Service - AI Era Project Manager Dashboard",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "start": "bun run dist/index.js"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.1.0",
+    "@opentui/keymap": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

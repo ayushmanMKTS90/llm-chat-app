@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #000000;
+    --color-on-primary: #ffffff;
+    --color-ink: #000000;
+    --color-ink-deep: #090909;
+    --color-charcoal: #525252;
+    --color-body: #737373;
+    --color-mute: #a3a3a3;
+    --color-canvas: #ffffff;
+    --color-canvas-soft: #fafafa;
+    --color-surface-card: #ffffff;
+    --color-hairline: #e5e5e5;
+    --color-hairline-strong: #d4d4d4;
+    --color-on-dark: #ffffff;
+    --color-on-dark-mute: rgba(255, 255, 255, 0.7);
+    --color-surface-dark: #171717;
+    --color-focus-ring: rgba(59, 130, 246, 0.5);
+    --color-link: #000000;
+    --color-link-mute: #737373;
+    --color-success: #27c93f;
+    --color-success-soft: #dcfce7;
+    --color-error: #ef4444;
+    --color-error-soft: #fef2f2;
+    --color-warning: #f5a623;
+    --color-warning-soft: #fffbeb;
+    --shadow-focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    --font-display: 'Geist', system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .dark {
+    --color-canvas: #0a0a0a;
+    --color-canvas-soft: #171717;
+    --color-ink: #ffffff;
+    --color-body: #a3a3a3;
+    --color-hairline: #272727;
+    --color-surface-dark: #ffffff;
+    --color-on-dark: #000000;
+  }
+
+  * {
+    @apply border-hairline;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-body antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-focus-ring ring-offset-2 ring-offset-canvas;
+  }
+
+  ::selection {
+    @apply bg-primary text-on-primary;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-hairline-strong rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-body;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill bg-primary text-on-primary px-5 py-2 text-button-md font-medium transition-colors duration-fast hover:bg-ink-deep active:bg-ink-deep disabled:opacity-50 disabled:pointer-events-none h-9 min-w-[80px];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill bg-canvas text-ink border border-hairline-strong px-5 py-2 text-button-md font-medium transition-colors duration-fast hover:bg-canvas-soft active:bg-canvas-soft disabled:opacity-50 disabled:pointer-events-none h-9 min-w-[80px];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill bg-transparent text-ink px-4 py-2 text-button-md font-medium transition-colors duration-fast hover:bg-canvas-soft active:bg-canvas-soft disabled:opacity-50 disabled:pointer-events-none h-9;
+  }
+
+  .btn-pill-on-dark {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill bg-canvas text-ink px-5 py-2 text-button-md font-medium transition-colors duration-fast hover:bg-gray-200 active:bg-gray-200 disabled:opacity-50 disabled:pointer-events-none h-9;
+  }
+
+  .input-pill {
+    @apply w-full rounded-pill bg-canvas text-ink border border-hairline px-4 py-2.5 text-body-md transition-all duration-fast placeholder:text-mute h-10;
+  }
+
+  .input-pill:focus {
+    @apply border-focus-ring border-2 outline-none;
+  }
+
+  .textarea-card {
+    @apply w-full rounded-lg bg-canvas text-ink border border-hairline p-4 text-body-md transition-all duration-fast placeholder:text-mute resize-none;
+  }
+
+  .textarea-card:focus {
+    @apply border-focus-ring border-2 outline-none;
+  }
+
+  .card {
+    @apply rounded-lg bg-surface-card text-ink border border-hairline p-4;
+  }
+
+  .card-soft {
+    @apply rounded-lg bg-canvas-soft text-ink border border-hairline p-4;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-pill bg-canvas-soft px-2 py-0.5 text-caption-sm text-body;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center rounded-pill bg-success-soft px-2 py-0.5 text-caption-sm text-success;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center rounded-pill bg-warning-soft px-2 py-0.5 text-caption-sm text-warning;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center rounded-pill bg-error-soft px-2 py-0.5 text-caption-sm text-error;
+  }
+
+  .nav-bar {
+    @apply sticky top-0 z-50 h-14 bg-canvas border-b border-hairline;
+  }
+
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-50 w-72 bg-canvas border-r border-hairline transition-transform duration-normal ease-default lg:relative lg:translate-x-0;
+  }
+
+  .sidebar.collapsed {
+    @apply -translate-x-full lg:translate-x-0;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: animateIn 0.2s ease-out;
+  }
+
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-out {
+    animation: animateOut 0.15s ease-in;
+  }
+
+  @keyframes animateOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  .prose {
+    @apply text-body-md leading-relaxed;
+  }
+
+  .prose h1 { @apply text-display-xl font-display font-semibold; }
+  .prose h2 { @apply text-display-lg font-display font-semibold; }
+  .prose h3 { @apply text-heading-lg font-display font-semibold; }
+  .prose h4 { @apply text-heading-md font-display font-medium; }
+  .prose p { @apply my-4; }
+  .prose code { @apply text-code-sm bg-canvas-soft px-1.5 py-0.5 rounded-sm font-mono; }
+  .prose pre { @apply my-4 overflow-x-auto rounded-lg bg-surface-dark p-4; }
+  .prose pre code { @apply text-code-md bg-transparent p-0; }
+  .prose a { @apply text-link underline underline-offset-2 hover:text-link-mute; }
+  .prose ul { @apply list-disc pl-6 my-4 space-y-2; }
+  .prose ol { @apply list-decimal pl-6 my-4 space-y-2; }
+  .prose blockquote { @apply border-l-4 border-primary pl-4 my-4 italic text-body; }
+  .prose hr { @apply my-8 border-hairline; }
+  .prose table { @apply w-full border-collapse my-4; }
+  .prose th { @apply text-left p-2 border-b border-hairline font-medium; }
+  .prose td { @apply p-2 border-b border-hairline; }
+}

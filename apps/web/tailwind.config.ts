@@ -1,0 +1,91 @@
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/ui/src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        primary: 'var(--color-primary)',
+        'on-primary': 'var(--color-on-primary)',
+        ink: 'var(--color-ink)',
+        'ink-deep': 'var(--color-ink-deep)',
+        charcoal: 'var(--color-charcoal)',
+        body: 'var(--color-body)',
+        mute: 'var(--color-mute)',
+        canvas: 'var(--color-canvas)',
+        'canvas-soft': 'var(--color-canvas-soft)',
+        'surface-card': 'var(--color-surface-card)',
+        hairline: 'var(--color-hairline)',
+        'hairline-strong': 'var(--color-hairline-strong)',
+        'on-dark': 'var(--color-on-dark)',
+        'on-dark-mute': 'var(--color-on-dark-mute)',
+        'surface-dark': 'var(--color-surface-dark)',
+        'focus-ring': 'var(--color-focus-ring)',
+        link: 'var(--color-link)',
+        'link-mute': 'var(--color-link-mute)',
+        success: 'var(--color-success)',
+        'success-soft': 'var(--color-success-soft)',
+        error: 'var(--color-error)',
+        'error-soft': 'var(--color-error-soft)',
+        warning: 'var(--color-warning)',
+        'warning-soft': 'var(--color-warning-soft)',
+      },
+      fontFamily: {
+        display: ['var(--font-display)', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['var(--font-body)', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+      },
+      fontSize: {
+        'display-xl': ['36px', { lineHeight: '1.11', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'display-lg': ['30px', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'heading-lg': ['24px', { lineHeight: '1.33', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'heading-md': ['20px', { lineHeight: '1.4', fontWeight: '500' }],
+        'heading-sm': ['18px', { lineHeight: '1.56', fontWeight: '500' }],
+        'body-md': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
+        'body-strong': ['16px', { lineHeight: '1.5', fontWeight: '500' }],
+        'body-sm': ['14px', { lineHeight: '1.43', fontWeight: '400' }],
+        'body-sm-strong': ['14px', { lineHeight: '1.43', fontWeight: '500' }],
+        'caption-sm': ['12px', { lineHeight: '1.33', fontWeight: '400' }],
+        'code-md': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
+        'code-sm': ['14px', { lineHeight: '1.43', fontWeight: '400' }],
+        'button-md': ['14px', { lineHeight: '1', fontWeight: '500' }],
+      },
+      borderRadius: {
+        none: '0px',
+        sm: '6px',
+        md: '8px',
+        lg: '12px',
+        full: '9999px',
+        pill: '9999px',
+        card: '12px',
+      },
+      spacing: {
+        xxs: '2px',
+        xs: '4px',
+        sm: '8px',
+        md: '12px',
+        lg: '16px',
+        xl: '24px',
+        xxl: '32px',
+        section: '88px',
+      },
+      boxShadow: {
+        'focus-ring': 'var(--shadow-focus-ring)',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        normal: '200ms',
+      },
+      transitionTimingFunction: {
+        default: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;

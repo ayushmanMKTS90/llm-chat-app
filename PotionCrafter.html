@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Potion Crafter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+body{background:#1a0a2e;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'Segoe UI',sans-serif;overflow:hidden}
+#game{position:relative;width:960px;height:640px;background:#2d1b4e;border-radius:12px;overflow:hidden;box-shadow:0 0 60px rgba(100,50,200,.4)}
+.screen{position:absolute;inset:0;display:none}
+.screen.active{display:flex}
+#titleScreen{flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a0a2e,#2d1b4e,#1a0a2e);text-align:center;z-index:10}
+#titleScreen h1{font-size:64px;color:#f0d060;text-shadow:0 0 30px rgba(240,208,96,.5),0 4px 8px rgba(0,0,0,.5);margin-bottom:8px}
+#titleScreen .sub{font-size:22px;color:#b0c0e0;margin-bottom:40px}
+#titleScreen .desc{font-size:15px;color:#888;max-width:420px;line-height:1.6;margin-bottom:30px}
+#startBtn{font-size:24px;padding:14px 50px;border:2px solid #f0d060;background:transparent;color:#f0d060;border-radius:8px;cursor:pointer;transition:.3s}
+#startBtn:hover{background:#f0d060;color:#1a0a2e;box-shadow:0 0 30px rgba(240,208,96,.3)}
+#gameScreen{flex-direction:column;background:#000}
+#topBar{height:44px;background:rgba(0,0,0,.7);display:flex;align-items:center;padding:0 12px;gap:14px;z-index:5;position:relative;font-size:14px;color:#ccc}
+#topBar .phase{color:#f0d060;font-weight:bold;font-size:16px}
+#topBar .timer{color:#fff;margin-left:auto}
+#topBar .coins{color:#ffd700}
+#topBar .day{color:#88ccff}
+#gameArea{flex:1;position:relative;overflow:hidden;background:#0a0815}
+#gameArea::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(20,15,10,.4) 100%);pointer-events:none;z-index:1}
+.inv-panel{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;font-size:13px;min-width:160px;z-index:3;color:#aaa}
+.inv-panel h3{color:#f0d060;font-size:14px;margin-bottom:6px}
+.inv-row{display:flex;justify-content:space-between;padding:2px 0}
+.inv-row .qty{color:#fff;font-weight:bold}
+
+/* Player */
+#player{position:absolute;width:40px;height:40px;z-index:10;pointer-events:none;transition:none;image-rendering:pixelated;left:460px;top:300px}
+#player img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+#player.walk-right{animation:playerBob .35s ease-in-out infinite}
+#player.walk-right img{transform:scaleX(1)}
+#player.walk-left{animation:playerBob .35s ease-in-out infinite}
+#player.walk-left img{transform:scaleX(-1)}
+#player:not(.walk-right):not(.walk-left){animation:playerIdle 2.5s ease-in-out infinite}
+@keyframes playerBob{0%,100%{transform:translateY(0)}25%{transform:translateY(-3px)}75%{transform:translateY(1px)}}
+@keyframes playerIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+#interactPrompt{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:15;display:none;background:rgba(0,0,0,.8);color:#fff;padding:8px 18px;border-radius:6px;font-size:14px;border:1px solid rgba(240,208,96,.3);white-space:nowrap;text-align:center}
+#interactPrompt .key{color:#f0d060;font-weight:bold}
+#interactPrompt .sub{color:#aaa;font-size:12px}
+
+/* Enemies & Projectiles */
+#enemyLayer,#projectileLayer{position:absolute;inset:0;pointer-events:none;z-index:0}
+.enemy{position:absolute;width:40px;height:40px;z-index:7;pointer-events:none}
+.enemy img{width:100%;height:100%;object-fit:contain;border-radius:50%;filter:drop-shadow(0 0 6px rgba(255,0,0,.3));animation:enemyPulse 1.5s ease-in-out infinite}
+@keyframes enemyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.enemy.hit img{filter:drop-shadow(0 0 12px rgba(255,255,255,.6)) brightness(1.5)}
+.enemy.dead{opacity:0;transform:scale(0);transition:all .3s}
+.projectile{position:absolute;width:8px;height:8px;z-index:8;border-radius:50%;background:#ffd700;box-shadow:0 0 8px rgba(255,215,0,.9);pointer-events:none;animation:projGlow .3s ease-in-out infinite alternate}
+@keyframes projGlow{from{box-shadow:0 0 4px rgba(255,215,0,.6)}to{box-shadow:0 0 12px rgba(255,215,0,1)}}
+
+/* Boss */
+.boss{position:absolute;width:80px;height:80px;z-index:9;pointer-events:none}
+.boss img{width:100%;height:100%;object-fit:contain;border-radius:50%;filter:drop-shadow(0 0 20px rgba(255,0,0,.6));animation:bossPulse 1s ease-in-out infinite}
+.boss .hp-bar{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:70px;height:4px;background:rgba(255,0,0,.3);border-radius:2px;overflow:hidden}
+.boss .hp-fill{height:100%;background:#ff4444;border-radius:2px;transition:width .15s}
+@keyframes bossPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 15px rgba(255,0,0,.4))}50%{transform:scale(1.05);filter:drop-shadow(0 0 30px rgba(255,0,0,.8))}}
+.boss.charging img{animation:bossCharge .25s ease-in-out infinite alternate}
+@keyframes bossCharge{from{transform:scale(1.08) rotate(-3deg)}to{transform:scale(1.15) rotate(3deg)}}
+#bossAlert{position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:15;display:none;background:rgba(180,20,20,.9);color:#fff;padding:8px 20px;border-radius:8px;font-size:16px;font-weight:bold;white-space:nowrap;border:1px solid rgba(255,80,80,.4);text-shadow:0 0 8px rgba(255,0,0,.4);pointer-events:none}
+#bossAlert.show{display:block;animation:alertPulse .4s ease-out 4}
+@keyframes alertPulse{0%,100%{opacity:1;transform:translateX(-50%) scale(1)}50%{opacity:.7;transform:translateX(-50%) scale(1.06)}}
+
+/* Creature - Don't Starve style */
+.creature{position:absolute;cursor:pointer;z-index:2;text-align:center;transition:opacity .4s, transform .3s}
+.creature img{width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));transition:filter .4s;animation:creatureFloat 3s ease-in-out infinite}
+.creature .label{color:#fff;font-size:12px;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:4px;display:inline-block;margin-top:2px;transition:opacity .4s}
+@keyframes creatureFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.creature.depleted{pointer-events:none;transform:scale(.7)!important;opacity:.35}
+.creature.depleted img{filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)) grayscale(.8)}
+.creature.depleted .label{opacity:0}
+.creature.harvest-anim img{animation:harvestPulse .35s ease-out}
+.creature .cooldown-bar{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:60px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
+.creature .cooldown-fill{height:100%;background:#f0d060;border-radius:2px;transition:width .1s linear;width:0%}
+
+@keyframes harvestPulse{0%{transform:scale(1)}30%{transform:scale(1.25)}60%{transform:scale(.9)}100%{transform:scale(1)}}
+
+/* Scatter items (Don't Starve style) */
+.scatter-item{position:absolute;z-index:12;pointer-events:none;font-size:13px;font-weight:bold;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.8);transition:all .9s ease-out;opacity:1}
+.scatter-item.fly{opacity:0;transform:translate(var(--fx),var(--fy)) scale(.5)}
+.scatter-item img{width:22px;height:22px;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+
+/* Night Overlay - full screen takeover */
+#nightOverlay{position:absolute;inset:0;z-index:30;display:none;background:linear-gradient(135deg,#0a0618 0%,#160a2a 50%,#0a0618 100%)}
+#nightOverlay.active{display:flex;align-items:center;justify-content:center}
+#nightOverlay .brew-container{display:flex;gap:30px;align-items:center;justify-content:center;width:90%;max-width:800px}
+#nightOverlay .brew-left{text-align:center;flex-shrink:0}
+#nightOverlay .brew-left img{width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(255,100,0,.3));animation:cauldronGlow 2s ease-in-out infinite alternate}
+@keyframes cauldronGlow{from{filter:drop-shadow(0 0 15px rgba(255,80,0,.25))}to{filter:drop-shadow(0 0 30px rgba(255,120,0,.5))}}
+#nightOverlay .brew-left .slots-row{display:flex;gap:8px;justify-content:center;margin-top:6px}
+#nightOverlay .brew-left .slot{width:56px;height:56px;border:2px dashed rgba(255,255,255,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);cursor:pointer;transition:.2s;font-size:9px;color:#555}
+#nightOverlay .brew-left .slot:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.05)}
+#nightOverlay .brew-left .slot.filled{border-color:#66ff88;background:rgba(80,255,120,.12)}
+#nightOverlay .brew-left .slot.filled:hover{border-color:#ff6666;background:rgba(255,80,80,.15)}
+#nightOverlay .brew-left .slot img{width:38px;height:38px;object-fit:contain}
+#nightOverlay .brew-left #brewBtn{margin-top:8px;padding:8px 28px;font-size:15px;font-weight:bold;background:linear-gradient(135deg,#f0a030,#d08020);border:none;border-radius:6px;color:#1a0a2e;cursor:pointer}
+#nightOverlay .brew-left #brewBtn:hover{background:linear-gradient(135deg,#ffb840,#e09030)}
+#nightOverlay .brew-left #brewStatus{color:#888;font-size:11px;margin:4px 0}
+#nightOverlay .brew-right{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:260px}
+#nightOverlay .brew-right .customer-card{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px 18px;text-align:center;width:100%}
+#nightOverlay .brew-right .customer-card h3{color:#f0d060;font-size:14px;margin-bottom:4px}
+#nightOverlay .brew-right .customer-card p{color:#ccc;font-size:13px}
+#nightOverlay .brew-right .customer-card .recipe{color:#88ccff;font-size:12px;margin-top:2px}
+#nightOverlay .brew-right .customer-card .served{color:#888;font-size:11px;margin-top:4px}
+#nightOverlay .brew-right .customer-card .speech{color:#aaa;font-size:12px;font-style:italic;margin-top:4px}
+#nightOverlay .brew-right .ing-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%}
+#nightOverlay .brew-right .ing-grid .grid-label{grid-column:1/-1;color:#f0d060;font-size:11px;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);padding:2px 0 4px}
+#nightOverlay .brew-right .ing-grid .ing-item{width:48px;height:64px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.2s;color:#ccc;font-size:8px;position:relative}
+#nightOverlay .brew-right .ing-grid .ing-item:hover{border-color:#f0d060;background:rgba(240,208,96,.12);transform:scale(1.08)}
+#nightOverlay .brew-right .ing-grid .ing-item img{width:24px;height:24px;object-fit:contain}
+#nightOverlay .brew-right .ing-grid .ing-item .iqty{color:#fff;font-size:12px;font-weight:bold}
+#nightOverlay .brew-right .inventory-panel{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;width:100%;max-height:100px;overflow-y:auto}
+#nightOverlay .brew-right .inventory-panel h4{color:#f0d060;font-size:11px;margin-bottom:4px}
+#nightOverlay .brew-right .inventory-panel .inv-row{display:flex;justify-content:space-between;color:#aaa;font-size:11px;padding:1px 0}
+#nightOverlay .brew-right .inventory-panel .inv-row .qty{color:#fff;font-weight:bold}
+
+/* Keep old night UI rules for backward compat but disabled */
+#nightUI{display:none!important}
+
+/* Procedural decor */
+.deco-item{position:absolute;pointer-events:none;z-index:1}
+.deco-item img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+#resultPopup{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,.6)}
+#resultPopup.show{display:flex}
+#resultPopup .box{background:linear-gradient(135deg,#2d1b4e,#1a0a2e);border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:30px 50px;text-align:center;box-shadow:0 0 40px rgba(0,0,0,.5)}
+#resultPopup .box h2{color:#f0d060;margin-bottom:8px}
+#resultPopup .box p{color:#ccc;margin-bottom:16px;font-size:16px}
+#resultPopup .box button{padding:8px 30px;border:1px solid #f0d060;background:transparent;color:#f0d060;border-radius:6px;cursor:pointer;font-size:15px}
+#resultPopup .box button:hover{background:#f0d060;color:#1a0a2e}
+
+#helpBtn{margin-left:auto;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:transparent;color:#aaa;font-size:15px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;line-height:1}
+#helpBtn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:#f0d060}
+#helpOverlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:35;background:rgba(0,0,0,.7)}
+#helpOverlay.show{display:flex}
+#helpOverlay .help-box{background:linear-gradient(135deg,#2d1b4e,#1a0a2e);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:24px 30px;max-width:460px;width:90%;box-shadow:0 0 40px rgba(0,0,0,.6)}
+#helpOverlay .help-box h2{color:#f0d060;margin-bottom:14px;font-size:20px;text-align:center}
+#helpOverlay .help-body{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+#helpOverlay .help-section{display:flex;gap:10px;color:#ccc;font-size:13px;line-height:1.5}
+#helpOverlay .help-section .help-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center;color:#f0d060}
+#helpOverlay .help-section .key{color:#f0d060;font-weight:bold}
+#helpOverlay .help-section b{color:#e0e0e0}
+#helpCloseBtn{display:block;margin:0 auto;padding:8px 32px;border:1px solid #f0d060;background:transparent;color:#f0d060;border-radius:6px;cursor:pointer;font-size:14px;transition:.2s}
+#helpCloseBtn:hover{background:#f0d060;color:#1a0a2e}
+
+/* Continue + Game Over */
+#continueBtn{font-size:18px;padding:10px 40px;border:2px solid #66ff88;background:transparent;color:#66ff88;border-radius:8px;cursor:pointer;transition:.3s;margin-bottom:10px;display:none}
+#continueBtn:hover{background:#66ff88;color:#1a0a2e;box-shadow:0 0 30px rgba(100,255,130,.3)}
+#gameOverOverlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:40;background:rgba(0,0,0,.85)}
+#gameOverOverlay.show{display:flex}
+#gameOverOverlay .gameover-box{background:linear-gradient(135deg,#2d1b4e,#1a0a2e);border:2px solid rgba(255,50,50,.3);border-radius:12px;padding:30px 50px;text-align:center;box-shadow:0 0 60px rgba(255,0,0,.2)}
+#gameOverOverlay .gameover-box h2{color:#ff4444;font-size:28px;margin-bottom:8px}
+#gameOverOverlay .gameover-box p{color:#ccc;font-size:15px;margin-bottom:12px}
+#gameOverOverlay .gameover-box .stats{color:#aaa;font-size:14px;line-height:1.8;margin-bottom:16px}
+#gameOverOverlay .gameover-box button{padding:10px 36px;border:1px solid #ff4444;background:transparent;color:#ff4444;border-radius:6px;cursor:pointer;font-size:16px}
+#gameOverOverlay .gameover-box button:hover{background:#ff4444;color:#1a0a2e}
+
+.ingredient-grid{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,1fr);gap:4px;z-index:3}
+.ingredient-grid .grid-label{grid-column:1/-1;color:#f0d060;font-size:12px;padding:2px 0 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:2px}
+.ingredient-grid .ing-item{width:54px;height:58px;border:1px solid rgba(255,255,255,.25);border-radius:6px;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.2s;color:#ccc;font-size:9px;position:relative}
+.ingredient-grid .ing-item:hover{border-color:#f0d060;background:rgba(240,208,96,.15);transform:scale(1.08)}
+.ingredient-grid .ing-item img{width:28px;height:28px;object-fit:contain}
+.ingredient-grid .ing-item .iqty{color:#fff;font-size:13px;font-weight:bold}
+.night-customer-info{position:absolute;right:10px;bottom:10px;z-index:3;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;font-size:13px;max-width:220px;color:#ccc}
+.night-customer-info h3{color:#f0d060;font-size:14px;margin-bottom:4px}
+.night-customer-info .recipe{color:#88ccff;font-size:12px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="titleScreen" class="screen active">
+    <h1>Potion Crafter</h1>
+    <div class="sub">An Idle Alchemy Adventure</div>
+    <div class="desc">By day, gather ingredients from magical creatures. By night, brew potions for your customers. Each creature takes time to regenerate after harvesting!</div>
+    <button id="continueBtn">Continue</button>
+    <button id="startBtn">New Game</button>
+  </div>
+
+  <div id="gameScreen" class="screen">
+    <div id="topBar">
+      <span class="phase" id="phaseLabel">DAY</span>
+      <span class="day" id="dayLabel">Day 1</span>
+      <span class="coins" id="coinDisplay">Coins: 10</span>
+      <span class="timer" id="timerDisplay">Time: 60</span>
+      <button id="helpBtn">?</button>
+    </div>
+    <div id="gameArea">
+      <div id="enemyLayer"></div>
+      <div id="projectileLayer"></div>
+      <div id="player"><img src="assets-new/sprites/fire-mage.png"></div>
+      <div id="interactPrompt"></div>
+      <div id="bossAlert"></div>
+      <div id="creatures"></div>
+      <div id="scatterLayer" style="position:absolute;inset:0;pointer-events:none;z-index:12"></div>
+      <div id="dayUI">
+        <div id="dayInv" class="inv-panel">
+          <h3>Ingredients</h3>
+          <div id="dayInvList"></div>
+        </div>
+      </div>
+      <canvas id="groundCanvas" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block"></canvas>
+      <div id="decorLayer" style="position:absolute;inset:0;pointer-events:none;z-index:1"></div>
+      <canvas id="fogCanvas" style="position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;display:block;image-rendering:pixelated"></canvas>
+      <div id="nightOverlay">
+        <div class="brew-container">
+          <div class="brew-left">
+            <img id="cauldronSprite" alt="Cauldron">
+            <div id="brewStatus">Click ingredients to fill slots, then BREW</div>
+            <div class="slots-row">
+              <div class="slot" id="slot1"><span style="color:#555;font-size:9px">slot 1</span></div>
+              <div class="slot" id="slot2"><span style="color:#555;font-size:9px">slot 2</span></div>
+            </div>
+            <button id="brewBtn">BREW</button>
+          </div>
+          <div class="brew-right">
+            <div class="customer-card">
+              <h3 id="customerWant">Waiting for customers...</h3>
+              <p class="speech" id="customerSpeech">A customer will arrive soon!</p>
+              <div class="recipe" id="recipeDisplay"></div>
+              <div class="served" id="servedDisplay">Served: 0</div>
+            </div>
+            <div class="ing-grid" id="nightIngGrid"></div>
+            <div class="inventory-panel">
+              <h4>Inventory</h4>
+              <div id="nightInvList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpOverlay">
+    <div class="help-box">
+      <h2>How to Play</h2>
+      <div class="help-body">
+        <div class="help-section"><span class="help-icon">&#9725;</span><div><b>Day</b> — Walk (<span class="key">WASD</span>) to creatures, press <span class="key">E</span> to harvest ingredients. Creatures need time to regenerate! <b>Enemies</b> chase you — your wizard auto-fires at them!</div></div>
+        <div class="help-section"><span class="help-icon">&#9726;</span><div><b>Night</b> — Select ingredients via click or <span class="key">1-0</span> keys, then click <span class="key">BREW</span>. Match the customer's recipe to earn coins.</div></div>
+        <div class="help-section"><span class="help-icon">&#8635;</span><div><b>Cauldron slots</b> — Click a filled slot to return the ingredient. Both slots must hold <i>different</i> ingredients matching the recipe.</div></div>
+        <div class="help-section"><span class="help-icon">&#9733;</span><div><b>Tip</b> — Ingredients are limited! Harvest wisely from all 5 creatures to stock up.</div></div>
+      </div>
+      <button id="helpCloseBtn">Got it!</button>
+    </div>
+  </div>
+
+  <div id="resultPopup">
+    <div class="box">
+      <h2 id="resultTitle">Result</h2>
+      <p id="resultText">Message</p>
+      <button id="resultBtn">OK</button>
+    </div>
+  </div>
+
+  <div id="gameOverOverlay">
+    <div class="gameover-box">
+      <h2>Game Over</h2>
+      <p id="gameOverText">You ran out of coins!</p>
+      <div class="stats" id="gameOverStats"></div>
+      <button id="restartBtn">Try Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// CONFIG
+// ================================================================
+const ASSETS = {
+  player:"assets-new/sprites/fire-mage.png",
+  cauldron:"assets/Cauldron_On_Fire/2b390634c856a177089fea8463b101567cbd7af71836752f455164b4a5c6afad_Cauldron On Fire_No Shadow.png",
+  cauldronFire:"assets/Cauldron_On_Fire/67c304ea46148c32d56666c23ab25ee4f1a3f5be0075fa673b19b1f4f5e269e2_Cauldron On Fire_Shadow.png",
+  creatures:["assets-new/sprites/owl-sage-16bit.png","assets-new/sprites/sorceress-genie-summoning.png","assets-new/sprites/treant-awakened-angry.png","assets-new/sprites/forest-witch-herb-pouch.png","assets-new/sprites/swamp-troll-mossy.png"],
+};
+const ENEMY_SPRITES = ["assets-new/sprites/skeleton-warrior-rusted-sword.png","assets-new/sprites/wraith-wind-phantom.png","assets-new/sprites/giant-spider-hairy-legs.png","assets-new/sprites/orc-brute-iron-club.png","assets-new/sprites/dire-wolf-mountain.png","assets-new/sprites/slime-black-tendril.png","assets-new/sprites/bandit-leader-crossbow.png","assets-new/sprites/cultist-hooded-knife.png","assets-new/sprites/cursed-crow-three-eye.png","assets-new/sprites/bog-hag-long-arms.png","assets-new/sprites/marsh-lurker-eyes-many.png","assets-new/sprites/goblin-sneak-crossbow.png"];
+const INGREDIENT_ICONS = {firebloom:"assets-new/sprites/pomegranate-cluster-fresh.png",iceCrystal:"assets-new/sprites/crystal-goblet-bloodfilled.png",shadowEssence:"assets-new/sprites/brass-genie-lamp-polished.png",moonPetal:"assets-new/sprites/herbal-pouch-drawstring.png",rockRoot:"assets-new/sprites/necromancer-witch-bones.png",phoenixFeather:"assets-new/sprites/sorceress-genie-summoning.png",frostbloom:"assets-new/sprites/forest-witch-herb-pouch.png",nightshade:"assets-new/sprites/bog-mummy-bandaged.png",faerieDust:"assets-new/sprites/crystal-goblet-bloodfilled.png",trollHair:"assets-new/sprites/swamp-troll-mossy.png"};
+const INGREDIENT_NAMES = {firebloom:"Firebloom",iceCrystal:"Ice Crystal",shadowEssence:"Shadow Essence",moonPetal:"Moon Petal",rockRoot:"Rock Root",phoenixFeather:"Phoenix Feather",frostbloom:"Frostbloom",nightshade:"Nightshade",faerieDust:"Faerie Dust",trollHair:"Troll Hair"};
+const ALL_INGREDIENTS = ["firebloom","iceCrystal","shadowEssence","moonPetal","rockRoot","phoenixFeather","frostbloom","nightshade","faerieDust","trollHair"];
+const KEY_ING_MAP = ["firebloom","iceCrystal","shadowEssence","moonPetal","rockRoot","phoenixFeather","frostbloom","nightshade","faerieDust","trollHair"];
+const CREATURE_DEFS = [
+  {id:"slime_fire",name:"Fire Sprite",img:ASSETS.creatures[0],ingredient:"firebloom",ingName:"Firebloom"},
+  {id:"slime_block",name:"Frost Elemental",img:ASSETS.creatures[1],ingredient:"iceCrystal",ingName:"Ice Crystal"},
+  {id:"slime_spike",name:"Shadow Wisp",img:ASSETS.creatures[2],ingredient:"shadowEssence",ingName:"Shadow Essence"},
+  {id:"gloppy",name:"Forest Pixie",img:ASSETS.creatures[3],ingredient:"moonPetal",ingName:"Moon Petal"},
+  {id:"goblin",name:"Cave Troll",img:ASSETS.creatures[4],ingredient:"rockRoot",ingName:"Rock Root"},
+];
+const POTION_DEFS = [
+  {id:"fireResistance",name:"Fire Resistance Potion",ingredients:["firebloom","phoenixFeather"]},
+  {id:"frostWard",name:"Frost Ward Potion",ingredients:["iceCrystal","frostbloom"]},
+  {id:"shadowCloak",name:"Shadow Cloak Potion",ingredients:["shadowEssence","nightshade"]},
+  {id:"pixieFlight",name:"Pixie Flight Potion",ingredients:["moonPetal","faerieDust"]},
+  {id:"trollStrength",name:"Troll Strength Potion",ingredients:["rockRoot","trollHair"]},
+];
+const ENEMY_SPEED=55, ENEMY_HP=3, WIZARD_RANGE=220, PROJECTILE_SPEED=320, ENEMY_SPAWN=3.5;
+
+// ================================================================
+// DOM REFS
+// ================================================================
+const $=id=>document.getElementById(id);
+const DOM = {
+  title:$("titleScreen"), screen:$("gameScreen"),
+  phase:$("phaseLabel"), day:$("dayLabel"), coins:$("coinDisplay"), timer:$("timerDisplay"),
+  creatures:$("creatures"), scatter:$("scatterLayer"),
+  dayUI:$("dayUI"), dayInv:$("dayInvList"),
+  night:$("nightOverlay"), ground:$("groundCanvas"), decor:$("decorLayer"),
+  speech:$("customerSpeech"), cauldron:$("cauldronSprite"),
+  slot1:$("slot1"), slot2:$("slot2"), brewBtn:$("brewBtn"),
+  ingGrid:$("nightIngGrid"), nightInv:$("nightInvList"),
+  want:$("customerWant"), recipe:$("recipeDisplay"), served:$("servedDisplay"),
+  popup:$("resultPopup"), popTitle:$("resultTitle"), popText:$("resultText"), popBtn:$("resultBtn"),
+  area:$("gameArea"), player:$("player"), prompt:$("interactPrompt"), help:$("helpOverlay"),
+  enemyLayer:$("enemyLayer"), projLayer:$("projectileLayer"),
+};
+
+// ================================================================
+// ENGINE: INPUT
+// ================================================================
+class Input {
+  constructor(){
+    this.keys={}; this.last={};
+    document.addEventListener("keydown",e=>{const k=e.key.toLowerCase();this.keys[k]=true;if("wasdarrowuparrowdownarrowleftarrowright".includes(k))e.preventDefault();});
+    document.addEventListener("keyup",e=>{this.keys[e.key.toLowerCase()]=false;});
+  }
+  isDown(k){return!!this.keys[k]}
+  wasPressed(k){return this.keys[k]&&!this.last[k]}
+  snap(){Object.keys(this.keys).forEach(k=>{this.last[k]=this.keys[k]})}
+}
+
+// ================================================================
+// ENGINE: STATE
+// ================================================================
+class GameState {
+  constructor(){
+    this.reset();
+  }
+  reset(){
+    this.coins=10; this.day=1; this.time=60; this.phase="title"; this.started=false;
+    this.inv={}; ALL_INGREDIENTS.forEach(k=>this.inv[k]=5);
+    this.custQueue=[]; this.custIdx=0; this.custServed=0; this.custToday=0;
+    this.popup=false; this.slot1=null; this.slot2=null;
+    this.creatureStates=[]; this.timeAccel=1; this.cauldronFlip=0;
+    this.totalPotionsBrewed=0; this.totalCoinsEarned=0; this.totalCoinsLost=0; this.unservedCustomers=0; this.gameOver=false;
+  }
+}
+
+// ================================================================
+// ENGINE: GAME LOOP
+// ================================================================
+class GameEngine {
+  constructor(){
+    this.input=new Input();
+    this.state=new GameState();
+    this.player={x:460,y:300,speed:150,totalDist:0};
+    this.enemies=[]; this.projectiles=[]; this.enemyTimer=0; this.shootTimer=0;
+    this.fogCtx=null; this.running=false; this.lastTime=0; this.boss=null; this.bossSpawned=false;
+  }
+
+  start(){
+    this.state.reset();
+    this.state.started=true; this.state.phase="day"; this.state.time=60;
+    this.player.x=460;this.player.y=300;this.player.totalDist=0;
+    setScreen(DOM.screen);
+    this.startDay();
+    this.running=true; this.lastTime=performance.now();
+    this.tick(this.lastTime);
+  }
+
+  tick(now){
+    if(!this.running)return;
+    const dt=Math.min((now-this.lastTime)/1000,0.05);
+    this.lastTime=now;
+    this.update(dt);
+    requestAnimationFrame(t=>this.tick(t));
+  }
+
+  update(dt){
+    const s=this.state, p=this.player, inp=this.input;
+    if(!s.started||s.gameOver)return;
+    // Player movement
+    if(s.phase==="day"){
+      let dx=0,dy=0;
+      if(inp.isDown("w")||inp.isDown("arrowup"))dy=-1;
+      if(inp.isDown("s")||inp.isDown("arrowdown"))dy=1;
+      if(inp.isDown("a")||inp.isDown("arrowleft"))dx=-1;
+      if(inp.isDown("d")||inp.isDown("arrowright"))dx=1;
+      if(dx||dy){
+        const len=Math.hypot(dx,dy);
+        p.totalDist+=len;
+        p.x+=dx/len*p.speed*dt; p.y+=dy/len*p.speed*dt;
+        p.x=Math.max(0,Math.min(920,p.x)); p.y=Math.max(0,Math.min(600,p.y));
+        DOM.player.style.left=p.x+"px";DOM.player.style.top=p.y+"px";
+        DOM.player.className=dx<0?"walk-left":"walk-right";
+      }
+      // Interaction
+      if(inp.wasPressed("e"))this.handleInteract();
+      // Boss
+      this.updateBoss(dt);
+      // Enemy system
+      this.updateEnemies(dt);
+      // Projectile system
+      this.updateProjectiles(dt);
+      // Creature cooldowns
+      this.tickCreatures();
+      // Fog
+      this.updateFog();
+    }
+    // Ingredient shortcuts (any phase)
+    for(let i=0;i<10;i++){if(inp.wasPressed(String((i+1)%10)))this.clickIng(KEY_ING_MAP[i]);}
+    inp.snap();
+    // Timer
+    if(!s.popup){s.time-=dt*s.timeAccel;if(s.time<0)s.time=0;}
+    if(s.timeAccel>1)s.timeAccel=Math.max(1,s.timeAccel-dt*0.8);
+    // Cauldron anim
+    if(s.phase==="night"){s.cauldronFlip+=dt;if(s.cauldronFlip>0.4){s.cauldronFlip=0;DOM.cauldron.src=DOM.cauldron.src===ASSETS.cauldron?ASSETS.cauldronFire:ASSETS.cauldron;}}
+    // Phase transition
+    if(s.time<=0&&!s.popup){
+      if(s.phase==="day"){this.startNight();this.saveGame();}
+      else if(s.phase==="night"){this.endNight();}
+    }
+    // UI
+    this.updateUI(dt);
+  }
+
+// ===== PHASE TRANSITIONS =====
+  startDay(){
+    const s=this.state; s.phase="day"; s.time=60; s.slot1=null; s.slot2=null; s.popup=false; s.timeAccel=1;
+    DOM.night.classList.remove("active"); DOM.dayUI.style.display="block";
+    DOM.ground.style.display="block"; DOM.decor.style.display="block"; DOM.creatures.style.display="block"; DOM.player.style.display="block";
+    const p=this.player; p.x=460;p.y=300;p.totalDist=0;DOM.player.style.left=p.x+"px";DOM.player.style.top=p.y+"px";
+    this.boss=null;this.bossSpawned=false;document.getElementById("bossAlert").classList.remove("show");
+    this.clearEnemies(); this.spawnCreatures(); this.genGround(); this.genDecor(); this.initFog();
+  }
+  startNight(reuseQueue){
+    const s=this.state; s.phase="night"; s.time=60; s.popup=false; s.timeAccel=1; s.slot1=null; s.slot2=null;
+    DOM.dayUI.style.display="none"; DOM.ground.style.display="none"; DOM.decor.style.display="none";
+    DOM.creatures.style.display="none"; DOM.player.style.display="none"; DOM.prompt.style.display="none";
+    document.getElementById("fogCanvas").style.display="none";
+    DOM.night.classList.add("active"); DOM.cauldron.src=ASSETS.cauldron;
+    if(!reuseQueue){
+      const num=Math.min(3+Math.floor(s.day/2),POTION_DEFS.length);
+      const q=[];for(let i=0;i<num;i++)q.push(POTION_DEFS[Math.floor(Math.random()*POTION_DEFS.length)].id);
+      s.custQueue=q;s.custIdx=0;s.custToday=num;s.custServed=0;
+    }
+    DOM.speech.textContent="Welcome to my shop!";
+  }
+
+// ===== ENEMY SYSTEM =====
+  spawnEnemy(){
+    const side=Math.floor(Math.random()*4);
+    let x,y;
+    if(side===0){x=Math.random()*960;y=-20;}
+    else if(side===2){x=Math.random()*960;y=660;}
+    else if(side===1){x=980;y=Math.random()*640;}
+    else{x=-20;y=Math.random()*640;}
+    const el=document.createElement("div");el.className="enemy";
+    el.innerHTML='<img src="'+ENEMY_SPRITES[Math.floor(Math.random()*ENEMY_SPRITES.length)]+'">';
+    DOM.enemyLayer.appendChild(el);
+    this.enemies.push({el,x,y,hp:ENEMY_HP,hitTimer:0,dead:false});
+  }
+  updateEnemies(dt){
+    DOM.enemyLayer.style.display=this.state.phase==="day"?"block":"none";
+    if(this.state.phase!=="day"){this.enemies.length=0;DOM.enemyLayer.innerHTML="";return;}
+    this.enemyTimer+=dt;
+    if(this.enemyTimer>=ENEMY_SPAWN){this.enemyTimer=0;this.spawnEnemy();}
+    const px=this.player.x+20,py=this.player.y+20;
+    for(let i=this.enemies.length-1;i>=0;i--){
+      const e=this.enemies[i];
+      if(e.dead){this.enemies.splice(i,1);continue;}
+      const dx=px-e.x,dy=py-e.y,dist=Math.hypot(dx,dy);
+      if(dist>0){e.x+=dx/dist*ENEMY_SPEED*dt;e.y+=dy/dist*ENEMY_SPEED*dt;}
+      e.x=Math.max(-30,Math.min(990,e.x));e.y=Math.max(-30,Math.min(670,e.y));
+      e.el.style.left=e.x+"px";e.el.style.top=e.y+"px";
+      if(e.hitTimer>0)e.hitTimer-=dt;
+      if(dist<25){
+        this.player.x-=dx/dist*3;this.player.y-=dy/dist*3;
+        this.player.x=Math.max(0,Math.min(920,this.player.x));this.player.y=Math.max(0,Math.min(600,this.player.y));
+        DOM.player.style.left=this.player.x+"px";DOM.player.style.top=this.player.y+"px";
+        this.state.timeAccel=Math.min(3,this.state.timeAccel+0.5);
+      }
+    }
+  }
+  clearEnemies(){this.enemies.length=0;this.projectiles.length=0;DOM.enemyLayer.innerHTML="";DOM.projLayer.innerHTML="";this.enemyTimer=0;this.shootTimer=0;if(this.boss){try{this.boss.el.remove();}catch(e){}this.boss=null;}}
+
+// ===== BOSS SYSTEM =====
+  spawnBoss(){
+    if(this.boss||this.bossSpawned)return;this.bossSpawned=true;
+    const side=Math.floor(Math.random()*4);
+    let x,y;
+    if(side===0){x=Math.random()*960;y=-40;}
+    else if(side===2){x=Math.random()*960;y=680;}
+    else if(side===1){x=1000;y=Math.random()*640;}
+    else{x=-40;y=Math.random()*640;}
+    const el=document.createElement("div");el.className="boss";
+    const hp=8+Math.min(this.state.day*2,20);
+    el.innerHTML='<img src="'+ENEMY_SPRITES[Math.floor(Math.random()*ENEMY_SPRITES.length)]+'"><div class="hp-bar"><div class="hp-fill" style="width:100%"></div></div>';
+    DOM.enemyLayer.appendChild(el);
+    this.boss={el,x,y,hp,maxHp:hp,hitTimer:0,dead:false,boss:true,isCharging:false,chargeTimer:3+Math.random()*2};
+    const alert=document.getElementById("bossAlert");
+    alert.textContent="Boss Appears! Day "+this.state.day+" Boss";
+    alert.classList.add("show");
+    setTimeout(()=>alert.classList.remove("show"),2200);
+  }
+  updateBoss(dt){
+    if(this.state.phase!=="day")return;
+    const s=this.state;
+    // Spawn boss if time < 40 (20s into day) and not yet spawned
+    if(s.time<40&&!this.boss&&!this.bossSpawned&&s.time>0){this.spawnBoss();}
+    if(!this.boss||this.boss.dead)return;
+    const b=this.boss,px=this.player.x+20,py=this.player.y+20;
+    if(b.isCharging){
+      b.chargeTimer-=dt;
+      b.x+=b.chargeDx*280*dt;b.y+=b.chargeDy*280*dt;
+      if(b.chargeTimer<=0){b.isCharging=false;b.el.classList.remove("charging");b.chargeTimer=3+Math.random()*2;}
+    }else{
+      const dx=px-(b.x+40),dy=py-(b.y+40),dist=Math.hypot(dx,dy);
+      if(dist>0){b.x+=dx/dist*28*dt;b.y+=dy/dist*28*dt;}
+      b.chargeTimer-=dt;
+      if(b.chargeTimer<=0){
+        b.isCharging=true;b.el.classList.add("charging");
+        const d=Math.hypot(px-b.x,py-b.y)||1;
+        b.chargeDx=(px-b.x)/d;b.chargeDy=(py-b.y)/d;
+        b.chargeTimer=0.4;
+      }
+    }
+    b.x=Math.max(-40,Math.min(1000,b.x));b.y=Math.max(-40,Math.min(680,b.y));
+    b.el.style.left=b.x+"px";b.el.style.top=b.y+"px";
+    if(b.hitTimer>0)b.hitTimer-=dt;
+    // Boss-player collision
+    const bCx=b.x+40,bCy=b.y+40;
+    if(Math.hypot(px-bCx,py-bCy)<30){
+      const pushAngle=Math.atan2(bCy-py,bCx-px);
+      this.player.x-=Math.cos(pushAngle)*6;this.player.y-=Math.sin(pushAngle)*6;
+      this.player.x=Math.max(0,Math.min(920,this.player.x));this.player.y=Math.max(0,Math.min(600,this.player.y));
+      DOM.player.style.left=this.player.x+"px";DOM.player.style.top=this.player.y+"px";
+      s.timeAccel=Math.min(3,s.timeAccel+0.8);
+    }
+  }
+  bossDefeated(){
+    const b=this.boss;if(!b)return;
+    b.el.classList.add("dead");setTimeout(()=>{try{b.el.remove();}catch(e){}},300);
+    const reward=10+this.state.day*5;
+    this.state.coins+=reward;this.state.totalCoinsEarned+=reward;
+    // Scatter coins visually
+    for(let i=0;i<6;i++){
+      const el=document.createElement("div");el.className="scatter-item";
+      const a=Math.random()*Math.PI*2,d=40+Math.random()*80;
+      el.style.left=(b.x+30)+"px";el.style.top=(b.y+30)+"px";
+      el.style.setProperty("--fx",Math.cos(a)*d+"px");el.style.setProperty("--fy",Math.sin(a)*d+"px");
+      el.innerHTML='<span style="color:#ffd700;font-size:18px;font-weight:bold">+'+Math.ceil(reward/3)+'</span>';
+      DOM.scatter.appendChild(el);
+      requestAnimationFrame(()=>el.classList.add("fly"));
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},950);
+    }
+    this.showPopup("Boss Defeated!","You earned "+reward+" coins!");
+  }
+
+// ===== PROJECTILE SYSTEM =====
+  wizardShoot(){
+    let near=null,nearD=Infinity;const px=this.player.x+20,py=this.player.y+20;
+    const b=this.boss;
+    if(b&&!b.dead){const d=Math.hypot(b.x+40-px,b.y+40-py);if(d<WIZARD_RANGE){nearD=d;near=b;}}
+    this.enemies.forEach(e=>{if(e.dead)return;const d=Math.hypot(e.x-px,e.y-py);if(d<WIZARD_RANGE&&d<nearD){nearD=d;near=e;}});
+    if(!near)return;
+    const el=document.createElement("div");el.className="projectile";DOM.projLayer.appendChild(el);
+    this.projectiles.push({el,x:px,y:py,target:near,lifetime:1.5,dead:false});
+  }
+  updateProjectiles(dt){
+    DOM.projLayer.style.display=this.state.phase==="day"?"block":"none";
+    if(this.state.phase!=="day"){this.projectiles.length=0;DOM.projLayer.innerHTML="";return;}
+    this.shootTimer+=dt;
+    if(this.shootTimer>=0.8){this.shootTimer=0;this.wizardShoot();}
+    for(let i=this.projectiles.length-1;i>=0;i--){
+      const p=this.projectiles[i];
+      if(p.dead||p.target.dead||p.lifetime<=0){p.dead=true;this.projectiles.splice(i,1);p.el.remove();continue;}
+      p.lifetime-=dt;
+      const dx=p.target.x-p.x,dy=p.target.y-p.y,dist=Math.hypot(dx,dy);
+      if(dist<12){
+        p.target.hp--;p.dead=true;p.el.remove();this.projectiles.splice(i,1);
+        p.target.hitTimer=0.2;p.target.el.classList.add("hit");
+        setTimeout(()=>{try{p.target.el.classList.remove("hit");}catch(e){}},200);
+        if(p.target.hp<=0){
+          p.target.dead=true;
+          if(p.target.boss){this.bossDefeated();}
+          else{p.target.el.classList.add("dead");setTimeout(()=>{try{p.target.el.remove();}catch(e){}},300);}
+        }
+        if(p.target.boss){const f=p.target.el.querySelector(".hp-fill");if(f)f.style.width=Math.max(0,(p.target.hp/p.target.maxHp)*100)+"%";}
+        continue;
+      }
+      if(dist>0){p.x+=dx/dist*PROJECTILE_SPEED*dt;p.y+=dy/dist*PROJECTILE_SPEED*dt;}
+      p.el.style.left=p.x+"px";p.el.style.top=p.y+"px";
+    }
+  }
+
+// ===== CREATURE SYSTEM =====
+  spawnCreatures(){
+    DOM.creatures.innerHTML="";
+    const pos=this.rngPositions(CREATURE_DEFS.length,80,100,960,540,this.player.x+20,this.player.y+20);
+    CREATURE_DEFS.forEach((c,i)=>{c.x=pos[i].x;c.y=pos[i].y;});
+    this.state.creatureStates=CREATURE_DEFS.map(()=>({ready:true,cooldown:0,cooldownMax:5+Math.random()*4}));
+    this.renderCreatures();
+  }
+  rngPositions(count,minDist,margin,maxW,maxH,ax,ay){
+    const pos=[];
+    for(let a=0;a<200&&pos.length<count;a++){
+      const x=margin+Math.random()*(maxW-margin*2),y=margin+Math.random()*(maxH-margin*2);
+      if(Math.hypot(x-ax,y-ay)<120)continue;
+      let ok=true;for(const p of pos){if(Math.hypot(x-p.x,y-p.y)<minDist){ok=false;break;}}
+      if(ok)pos.push({x,y});
+    }
+    while(pos.length<count){const x=50+Math.random()*860,y=50+Math.random()*490;pos.push(Math.hypot(x-ax,y-ay)>=120?{x,y}:{x:100+Math.random()*760,y:100+Math.random()*390});}
+    return pos;
+  }
+  renderCreatures(){
+    DOM.creatures.innerHTML="";
+    CREATURE_DEFS.forEach((c,i)=>{
+      const st=this.state.creatureStates[i];
+      const el=document.createElement("div");
+      el.className="creature"+(st.ready?"":" depleted");
+      el.style.left=c.x+"px";el.style.top=c.y+"px";el.id="creature-"+i;
+      el.innerHTML='<img src="'+c.img+'" alt="'+c.name+'"><div class="label">'+c.name+'</div><div class="cooldown-bar"><div class="cooldown-fill" id="cd-'+i+'"></div></div>';
+      if(st.ready)el.addEventListener("click",()=>this.harvest(i));
+      DOM.creatures.appendChild(el);
+    });
+  }
+  harvest(idx){
+    const st=this.state.creatureStates[idx];
+    if(!st.ready||this.state.phase!=="day")return;
+    st.ready=false;st.cooldown=st.cooldownMax;
+    const el=document.getElementById("creature-"+idx);
+    if(el){el.classList.add("harvest-anim","depleted");el.style.pointerEvents="none";setTimeout(()=>{if(el)el.classList.remove("harvest-anim");},350);}
+    const c=CREATURE_DEFS[idx],amt=1+Math.floor(Math.random()*3);
+    this.state.inv[c.ingredient]+=amt;
+    this.scatterItems(c.x+30,c.y+30,c.ingredient,amt);
+  }
+  tickCreatures(){
+    this.state.creatureStates.forEach((st,i)=>{
+      if(!st.ready){
+        st.cooldown-=1/60;
+        if(st.cooldown<=0){
+          st.cooldown=0;st.ready=true;
+          const el=document.getElementById("creature-"+i);
+          if(el){el.classList.remove("depleted");el.style.pointerEvents="";el.onclick=()=>this.harvest(i);}
+        }
+        const fill=document.getElementById("cd-"+i);
+        if(fill){const pct=((st.cooldownMax-st.cooldown)/st.cooldownMax)*100;fill.style.width=Math.max(0,Math.min(100,pct))+"%";}
+      }
+    });
+  }
+  scatterItems(cx,cy,ing,count){
+    for(let i=0;i<count;i++){
+      const el=document.createElement("div");el.className="scatter-item";
+      const a=Math.random()*Math.PI*2,d=60+Math.random()*100;
+      el.style.left=cx+"px";el.style.top=cy+"px";
+      el.style.setProperty("--fx",Math.cos(a)*d+"px");el.style.setProperty("--fy",Math.sin(a)*d+"px");
+      el.innerHTML='<img src="'+INGREDIENT_ICONS[ing]+'"><span style="font-size:10px;display:block;text-align:center">+1</span>';
+      DOM.scatter.appendChild(el);
+      requestAnimationFrame(()=>el.classList.add("fly"));
+      setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},950);
+    }
+  }
+  handleInteract(){
+    if(this.state.popup||!this.state.started||this.state.phase!=="day")return;
+    const px=this.player.x+20,py=this.player.y+20;
+    for(let i=0;i<CREATURE_DEFS.length;i++){
+      const c=CREATURE_DEFS[i],st=this.state.creatureStates[i];
+      if(st&&st.ready&&Math.hypot(c.x+40-px,c.y+40-py)<70){this.harvest(i);return;}
+    }
+  }
+
+// ===== WORLD SYSTEM =====
+  genGround(){
+    const c=DOM.ground,ctx=c.getContext("2d");c.width=960;c.height=640;
+    const tile=48,cols=Math.ceil(960/tile),rows=Math.ceil(640/tile);
+    const grass=["#1a3a12","#1d3d16","#163a10","#1e3a18","#1c3a14"],dirt=["#3a2a1a","#3d2d1d","#382818","#3a2c1c"];
+    const rng=()=>{let s=this.state.day*9973+137;return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}};const rand=rng();
+    for(let r=0;r<rows;r++)for(let c2=0;c2<cols;c2++){const isD=rand()<0.08,pal=isD?dirt:grass;ctx.fillStyle=pal[Math.floor(rand()*pal.length)];ctx.globalAlpha=0.35+rand()*0.2;ctx.fillRect(c2*tile,r*tile,tile,tile);}
+    ctx.globalAlpha=1;const g=ctx.createRadialGradient(480,320,100,480,320,450);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,0.45)");ctx.fillStyle=g;ctx.fillRect(0,0,960,640);
+    ctx.strokeStyle="rgba(90,70,50,0.15)";ctx.lineWidth=20;
+    CREATURE_DEFS.forEach((cr,i)=>{if(i>0){ctx.beginPath();ctx.moveTo(CREATURE_DEFS[i-1].x+30,CREATURE_DEFS[i-1].y+30);ctx.lineTo(cr.x+30,cr.y+30);ctx.stroke();}});
+  }
+  genDecor(){
+    DOM.decor.innerHTML="";const count=30+Math.floor(Math.random()*20);
+    const types=[{w:20,h:20,c:"#5a8a3a",s:"circle"},{w:16,h:16,c:"#7a5a3a",s:"circle"},{w:12,h:12,c:"#4a7a2a",s:"rect"},{w:24,h:30,c:"#3a6a2a",s:"triangle"}];
+    const rng=()=>{let s=this.state.day*8191+73;return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}};const rand=rng();
+    for(let i=0;i<count;i++){const x=10+rand()*940,y=10+rand()*620;if(Math.hypot(x-this.player.x-20,y-this.player.y-20)<80)continue;const t=types[Math.floor(rand()*types.length)],el=document.createElement("div");el.className="deco-item";el.style.left=x+"px";el.style.top=y+"px";el.style.width=t.w+"px";el.style.height=t.h+"px";if(t.s==="circle"){el.style.borderRadius="50%";el.style.background=t.c;el.style.boxShadow="0 0 4px rgba(0,0,0,0.2)";}else if(t.s==="triangle"){el.style.width="0";el.style.height="0";el.style.borderLeft=(t.w/2)+"px solid transparent";el.style.borderRight=(t.w/2)+"px solid transparent";el.style.borderBottom=t.h+"px solid "+t.c;}else{el.style.background=t.c;el.style.borderRadius="2px";}DOM.decor.appendChild(el);}
+  }
+
+// ===== FOG SYSTEM =====
+  initFog(){
+    const c=document.getElementById("fogCanvas");c.width=960;c.height=640;c.style.display="block";
+    const ctx=c.getContext("2d");ctx.fillStyle="#030106";ctx.fillRect(0,0,960,640);
+    for(let i=0;i<120;i++){const s=10+Math.random()*60;ctx.fillStyle="rgba(8,4,16,"+(0.05+Math.random()*0.15)+")";ctx.fillRect(Math.random()*960,Math.random()*640,s,s);}
+    this.fogCtx=ctx;this.revealFog(480,320,80);
+  }
+  revealFog(x,y,r){
+    if(!this.fogCtx)return;this.fogCtx.globalCompositeOperation="destination-out";
+    const g=this.fogCtx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,"rgba(0,0,0,1)");g.addColorStop(0.6,"rgba(0,0,0,0.85)");g.addColorStop(1,"rgba(0,0,0,0)");
+    this.fogCtx.fillStyle=g;this.fogCtx.fillRect(x-r,y-r,r*2,r*2);this.fogCtx.globalCompositeOperation="source-over";
+  }
+  updateFog(){if(!this.fogCtx||this.state.phase!=="day")return;const r=40+Math.min((this.player.totalDist||0)/60,130);this.revealFog(this.player.x+20,this.player.y+20,r);}
+
+// ===== BREW SYSTEM =====
+  clickIng(ing){
+    const s=this.state;
+    if(s.popup){DOM.popup.classList.remove("show");s.popup=false;}
+    if(s.phase!=="night")return;
+    if(s.custIdx>=s.custQueue.length)return;
+    if(s.inv[ing]<=0){this.showPopup("Out of Stock!","No "+INGREDIENT_NAMES[ing]+" left!");return;}
+    if(!s.slot1){s.slot1=ing;s.inv[ing]--;}
+    else if(!s.slot2){s.slot2=ing;s.inv[ing]--;}
+    else{this.showPopup("Cauldron Full!","Click BREW or clear the slots.");return;}
+  }
+  brew(){
+    const s=this.state;
+    if(s.popup){DOM.popup.classList.remove("show");s.popup=false;}
+    if(s.phase!=="night")return;
+    if(!s.slot1||!s.slot2){this.showPopup("Missing Ingredients!","You need 2 ingredients in the cauldron.");return;}
+    if(s.custIdx>=s.custQueue.length){this.showPopup("All Served!","All customers served! Night will end soon.");s.slot1=null;s.slot2=null;return;}
+    const req=s.custQueue[s.custIdx],potion=POTION_DEFS.find(p=>p.id===req);
+    if(!potion){this.showPopup("Error!","Unknown recipe.");return;}
+    const need=potion.ingredients,s1=s.slot1,s2=s.slot2;
+    if(s1!==s2&&(s1===need[0]||s1===need[1])&&(s2===need[0]||s2===need[1])){
+      s.coins+=10;s.custServed++;s.custIdx++;
+      s.totalPotionsBrewed++;s.totalCoinsEarned+=10;
+      this.saveGame();
+      this.showPopup("Brew Successful!","You crafted "+potion.name+"! +10 coins.");
+      DOM.speech.textContent="Delicious! +10 coins!";
+    }else{
+      s.coins=Math.max(0,s.coins-2);s.totalCoinsLost+=2;
+      this.showPopup("Brew Failed!","Wrong recipe! Lost 1 ingredient and 2 coins...",()=>{
+        if(s.coins<=0)this.showGameOver();
+      });
+      DOM.speech.textContent="That's not right...";
+    }
+    s.slot1=null;s.slot2=null;
+  }
+  showPopup(title,text,cb){
+    DOM.popTitle.textContent=title;DOM.popText.textContent=text;
+    DOM.popup.classList.add("show");this.state.popup=true;
+    DOM.popBtn.onclick=()=>{DOM.popup.classList.remove("show");this.state.popup=false;if(cb)cb();};
+  }
+
+// ===== UI =====
+  updateUI(){
+    const s=this.state;
+    DOM.coins.textContent="Coins: "+s.coins;
+    DOM.timer.textContent="Time: "+Math.ceil(s.time)+(s.timeAccel>1?" ⚡"+s.timeAccel.toFixed(1)+"x":"");
+    DOM.day.textContent="Day "+s.day;DOM.phase.textContent=s.phase.toUpperCase();
+    DOM.served.textContent="Served: "+s.custServed;
+    // Day inventory
+    DOM.dayInv.innerHTML=["firebloom","iceCrystal","shadowEssence","moonPetal","rockRoot"].map(k=>'<div class="inv-row"><span>'+INGREDIENT_NAMES[k]+'</span><span class="qty">'+s.inv[k]+'</span></div>').join("");
+    // Night inventory
+    DOM.nightInv.innerHTML=ALL_INGREDIENTS.map(k=>'<div class="inv-row"><span>'+INGREDIENT_NAMES[k]+'</span><span class="qty">'+s.inv[k]+'</span></div>').join("");
+    // Night ingredient grid
+    DOM.ingGrid.innerHTML='<div class="grid-label">&#9654; Click or press <b>1-0</b></div>'+ALL_INGREDIENTS.map((k,i)=>'<div class="ing-item" data-ing="'+k+'"><span style="color:#777;font-size:7px;position:absolute;top:1px;left:3px">'+(i+1)%10+'</span><img src="'+INGREDIENT_ICONS[k]+'"><span style="color:#aaa;font-size:7px;line-height:1.1;margin-top:1px">'+INGREDIENT_NAMES[k]+'</span><span class="iqty">'+s.inv[k]+'</span></div>').join("");
+    // Slots
+    DOM.slot1.innerHTML=s.slot1?'<img src="'+INGREDIENT_ICONS[s.slot1]+'">':'<span style="color:#555;font-size:10px">empty</span>';DOM.slot1.className="slot"+(s.slot1?" filled":"");
+    DOM.slot2.innerHTML=s.slot2?'<img src="'+INGREDIENT_ICONS[s.slot2]+'">':'<span style="color:#555;font-size:10px">empty</span>';DOM.slot2.className="slot"+(s.slot2?" filled":"");
+    document.getElementById("brewStatus").textContent=s.slot1&&s.slot2?"Both filled! Click BREW to brew!":"Select 2 ingredients below, then click BREW";
+    // Customer info
+    if(s.phase==="night"){const idx=s.custIdx,q=s.custQueue;if(idx<q.length){const pn=q[idx],po=POTION_DEFS.find(x=>x.id===pn);DOM.want.textContent="Wants: "+(po?po.name:pn);DOM.recipe.textContent="Recipe: "+(po?po.ingredients.map(i=>INGREDIENT_NAMES[i]).join(" + "):"");}else if(s.custToday>0){DOM.want.textContent="All served! Well done!";DOM.recipe.textContent="";}}
+    // Prompt
+    if(s.phase==="day"){const idx=this.nearbyCreature();DOM.prompt.style.display=idx>=0?"block":"none";if(idx>=0)DOM.prompt.innerHTML='Press <span class="key">E</span> <span class="sub">harvest '+CREATURE_DEFS[idx].name+'</span>';}else DOM.prompt.style.display="none";
+  }
+  nearbyCreature(){
+    const px=this.player.x+20,py=this.player.y+20;
+    for(let i=0;i<CREATURE_DEFS.length;i++){const c=CREATURE_DEFS[i],st=this.state.creatureStates[i];if(st&&st.ready&&Math.hypot(c.x+40-px,c.y+40-py)<70)return i;}return -1;
+  }
+
+// ===== SAVE / LOAD =====
+  saveGame(){
+    try{
+      const s=this.state,data={
+        version:1,day:s.day,coins:s.coins,inv:JSON.parse(JSON.stringify(s.inv)),
+        phase:s.phase,
+        creatureStates:s.creatureStates.map(c=>({ready:c.ready,cooldown:c.cooldown,cooldownMax:c.cooldownMax})),
+        custQueue:s.custQueue,custIdx:s.custIdx,custServed:s.custServed,custToday:s.custToday,
+        totalPotionsBrewed:s.totalPotionsBrewed,totalCoinsEarned:s.totalCoinsEarned,totalCoinsLost:s.totalCoinsLost,unservedCustomers:s.unservedCustomers,
+        timestamp:Date.now()
+      };
+      localStorage.setItem("potionCrafterSave",JSON.stringify(data));
+    }catch(e){}
+  }
+  loadGame(){
+    try{
+      const raw=localStorage.getItem("potionCrafterSave");if(!raw)return null;
+      return JSON.parse(raw);
+    }catch(e){return null;}
+  }
+  hasSavedGame(){return this.loadGame()!==null}
+  deleteSave(){try{localStorage.removeItem("potionCrafterSave");}catch(e){}}
+
+  applySave(data){
+    const s=this.state;
+    s.day=data.day;s.coins=data.coins;
+    if(data.inv){Object.keys(data.inv).forEach(k=>{if(k in s.inv)s.inv[k]=data.inv[k];});}
+    s.totalPotionsBrewed=data.totalPotionsBrewed||0;
+    s.totalCoinsEarned=data.totalCoinsEarned||0;
+    s.totalCoinsLost=data.totalCoinsLost||0;
+    s.unservedCustomers=data.unservedCustomers||0;
+    if(data.creatureStates){
+      s.creatureStates=data.creatureStates.map(c=>({ready:c.ready,cooldown:c.cooldown,cooldownMax:c.cooldownMax||5}));
+    }
+    if(data.custQueue){s.custQueue=data.custQueue;s.custIdx=data.custIdx||0;s.custServed=data.custServed||0;s.custToday=data.custToday||data.custQueue.length;}
+    return data.phase||"day";
+  }
+
+// ===== NIGHT END & GAME OVER =====
+  endNight(){
+    const s=this.state;
+    const unserved=Math.max(0,s.custToday-s.custServed);
+    s.unservedCustomers+=unserved;
+    let msg;
+    if(unserved>0){
+      const penalty=unserved*5;
+      s.coins=Math.max(0,s.coins-penalty);
+      s.totalCoinsLost+=penalty;
+      msg="Customers left waiting: "+unserved+"\nCoins lost: "+penalty;
+    }else{
+      msg="All customers served! Perfect night!";
+    }
+    this.showPopup("Night Over",msg,()=>{
+      if(s.coins<=0){this.showGameOver();}
+      else{s.day++;s.time=60;this.startDay();this.saveGame();}
+    });
+  }
+
+  showGameOver(){
+    const s=this.state;s.gameOver=true;this.running=false;
+    DOM.gameOverStats.innerHTML="Days Survived: "+s.day+"<br>Potions Brewed: "+s.totalPotionsBrewed+"<br>Coins Earned: "+s.totalCoinsEarned+"<br>Coins Lost: "+s.totalCoinsLost+"<br>Unserved Customers: "+s.unservedCustomers;
+    document.getElementById("gameOverOverlay").classList.add("show");
+    this.deleteSave();
+  }
+}
+
+// ================================================================
+// INIT
+// ================================================================
+function setScreen(s){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));s.classList.add("active");}
+const engine=new GameEngine();
+DOM.slot1.addEventListener("click",()=>{const s=engine.state;if(s.slot1&&s.phase==="night"){s.inv[s.slot1]++;s.slot1=null;}});
+DOM.slot2.addEventListener("click",()=>{const s=engine.state;if(s.slot2&&s.phase==="night"){s.inv[s.slot2]++;s.slot2=null;}});
+DOM.brewBtn.addEventListener("click",()=>engine.brew());
+DOM.ingGrid.addEventListener("click",e=>{const ing=e.target.closest("[data-ing]");if(ing)engine.clickIng(ing.dataset.ing);});
+
+// Continue / New Game
+function tryContinue(){
+  const data=engine.loadGame();
+  if(!data)return false;
+  engine.state.reset();
+  const phase=engine.applySave(data);
+  engine.state.started=true;
+  setScreen(DOM.screen);
+  if(phase==="day"){
+    const savedStates=engine.state.creatureStates;
+    engine.startDay();
+    engine.state.creatureStates=savedStates;
+    engine.renderCreatures();
+  }else{
+    engine.startNight(true);
+  }
+  engine.running=true;engine.lastTime=performance.now();
+  engine.tick(engine.lastTime);
+  return true;
+}
+$("continueBtn").addEventListener("click",tryContinue);
+$("startBtn").addEventListener("click",()=>{engine.deleteSave();engine.start();});
+$("restartBtn").addEventListener("click",()=>{document.getElementById("gameOverOverlay").classList.remove("show");engine.deleteSave();engine.start();});
+$("helpBtn").addEventListener("click",()=>DOM.help.classList.toggle("show"));
+$("helpCloseBtn").addEventListener("click",()=>DOM.help.classList.remove("show"));
+// Show continue button if save exists
+if(engine.hasSavedGame()){$("continueBtn").style.display="block";}
+</script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Center — Run your whole role from one book</title>
+<meta name="description" content="A local-first, role-agnostic command center. One local AI core (Jan), your tools wired through MCP: tasks, email, design, all in a single desk. Private by default.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f2eee3;
+  --paper-deep:#e9e3d2;
+  --ink:#1a1711;
+  --ink-soft:#45402f;
+  --ink-faint:#6b6450;
+  --red:#c8381e;
+  --red-deep:#a52c16;
+  --blue:#2f55c4;
+  --green:#1f7a45;
+  --amber:#b07a11;
+  --hairline:#cfc7b0;
+  --rule:#d8d1b8;
+  --white:#fbf9f2;
+  --radius:10px;
+  --font-display:"Big Shoulders Display","Archivo Black",Impact,sans-serif;
+  --font-body:"Archivo",system-ui,-apple-system,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.035'/></feComponentTransfer></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.mono{font-family:var(--font-mono)}
+.small{font-size:13px;letter-spacing:.04em}
+
+/* ============ masthead ============ */
+.mast{
+  display:flex;align-items:center;gap:18px;
+  padding:18px 24px;max-width:1160px;margin:0 auto;
+  flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;line-height:1;margin-right:auto}
+.brand .name{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:.02em;text-transform:uppercase}
+.brand .sub{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+.mast nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.tab{
+  font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+  padding:9px 14px;color:var(--ink-soft);text-decoration:none;border:1px solid transparent;border-radius:6px;
+}
+.tab:hover{color:var(--ink);background:var(--paper-deep);border-color:var(--hairline)}
+.btn{
+  font-family:var(--font-mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+  display:inline-block;padding:12px 18px;border-radius:6px;text-decoration:none;border:1px solid transparent;cursor:pointer;
+}
+.btn-primary{background:var(--red);color:var(--white)}
+.btn-primary:hover{background:var(--red-deep)}
+.btn-ink{background:var(--ink);color:var(--paper)}
+.btn-ink:hover{background:#000}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+.btn:focus-visible,.tab:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+/* ============ hero ============ */
+.hero{padding:56px 0 20px}
+.hero .lede{max-width:720px}
+.hero h1{
+  font-family:var(--font-display);font-weight:900;text-transform:uppercase;
+  font-size:clamp(44px,7.5vw,84px);line-height:.92;letter-spacing:.005em;margin:0 0 22px;
+  text-wrap:balance;
+}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero .sub{font-size:19px;max-width:58ch;color:var(--ink-soft);margin:0 0 10px}
+.hero .proof{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);letter-spacing:.04em;margin:0 0 40px}
+
+/* ---------- the open prompt book ---------- */
+.book{
+  position:relative;
+  background:var(--white);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius);
+  box-shadow:0 2px 4px rgba(26,23,17,.06),0 18px 50px -18px rgba(26,23,17,.28);
+  overflow:hidden;
+}
+.book:before{ /* paper grain */
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.5;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.04'/></feComponentTransfer></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+}
+.book-top{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px 20px;border-bottom:1px solid var(--rule);
+}
+.book-title{font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:20px;letter-spacing:.02em;margin-right:auto}
+.book-tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--hairline);border-radius:4px;padding:4px 8px}
+.stamp-demo{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:4px 8px;transform:rotate(-2deg)}
+.cue{margin:0;font-family:var(--font-mono);font-size:13px}
+.cue table{width:100%;border-collapse:collapse}
+.cue th{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;
+  text-align:left;padding:14px 16px;border-bottom:2px solid var(--ink);
+}
+.cue td{padding:13px 16px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.cue tbody tr:last-child td{border-bottom:none}
+.cue .dept{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.cue .dept .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+.dot-email{background:var(--blue)}
+.dot-projects{background:var(--green)}
+.dot-design{background:var(--amber)}
+.cue .act{font-weight:600}
+.cue .act .tool{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);font-weight:400}
+.cue .at{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.cue tr.active td{background:#fff6ef}
+.cue tr.active .act{color:var(--red-deep)}
+.status{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;font-weight:600}
+.st-standby{color:var(--ink-soft);border:1px solid var(--hairline);border-radius:4px;padding:4px 8px}
+.st-go{color:var(--white);background:var(--red);border-radius:4px;padding:4px 8px;box-shadow:0 0 0 3px rgba(200,56,30,.18)}
+.st-hold{color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:4px 8px}
+.run{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+  background:transparent;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:7px 12px;cursor:pointer;
+}
+.run:hover{background:var(--red);color:var(--white)}
+.run:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.log{
+  margin:0;padding:14px 20px;border-top:1px solid var(--rule);
+  font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);
+}
+.log .prompt{color:var(--red);font-weight:600}
+.log .line{white-space:pre-wrap;word-break:break-word}
+@keyframes stampin{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.stamp-fresh{animation:stampin .28s cubic-bezier(.16,1,.3,1)}
+
+/* ============ generic section ============ */
+section{padding:64px 0}
+.sec-head{max-width:760px;margin-bottom:40px}
+.sec-head h2{font-family:var(--font-display);font-weight:900;text-transform:uppercase;font-size:clamp(34px,5vw,54px);line-height:.95;margin:0 0 18px;text-wrap:balance}
+.sec-head p{color:var(--ink-soft);font-size:18px;max-width:58ch;margin:0}
+
+/* ============ departments (mechanism) ============ */
+.dep-grid{display:grid;grid-template-columns:220px 1fr;gap:0;border:1px solid var(--hairline);border-radius:var(--radius);background:var(--white);overflow:hidden}
+.dep-tabs{background:var(--paper-deep);border-right:1px solid var(--hairline);padding:10px}
+.dep-tab{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+  background:transparent;border:1px solid transparent;border-radius:6px;padding:12px 12px;color:var(--ink-soft);cursor:pointer;
+}
+.dep-tab .num{color:var(--ink-faint);font-size:11px}
+.dep-tab:hover{color:var(--ink)}
+.dep-tab[aria-selected="true"]{background:var(--white);color:var(--ink);border-color:var(--hairline);box-shadow:0 1px 3px rgba(26,23,17,.08)}
+.dep-panel{padding:26px 28px;display:none}
+.dep-panel.active{display:block}
+.dep-panel .who{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 14px}
+.dep-panel h3{font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:28px;margin:0 0 10px}
+.dep-panel p{color:var(--ink-soft);margin:0 0 18px;max-width:56ch}
+.mcp-status{font-family:var(--font-mono);font-size:12px;color:var(--green);border:1px solid var(--green);border-radius:4px;display:inline-block;padding:4px 10px;margin-bottom:18px;letter-spacing:.04em}
+.flow{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.flow li{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);font-size:15px;align-items:baseline}
+.flow .q{font-family:var(--font-mono);font-size:12px;color:var(--red);font-weight:600;white-space:nowrap}
+.flow .t{color:var(--ink)}
+
+/* ============ roles ============ */
+.role-rack{border:1px solid var(--hairline);border-radius:var(--radius);background:var(--white);overflow:hidden}
+.role-tabs{display:flex;border-bottom:1px solid var(--hairline);background:var(--paper-deep);overflow-x:auto}
+.role-tab{
+  font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+  padding:14px 22px;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;
+}
+.role-tab:hover{color:var(--ink)}
+.role-tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red);background:var(--white)}
+.role-panel{display:none;padding:28px}
+.role-panel.active{display:block}
+.role-panel h3{font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:26px;margin:0 0 8px}
+.role-panel .same-core{font-family:var(--font-mono);font-size:12px;color:var(--green);margin:0 0 14px;letter-spacing:.04em}
+.role-panel p{color:var(--ink-soft);margin:0;max-width:60ch}
+.role-stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.role-chip{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--hairline);border-radius:4px;padding:5px 10px}
+
+/* ============ local / private ============ */
+.local-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.local-item{background:var(--white);border:1px solid var(--hairline);border-radius:var(--radius);padding:20px 20px 18px;position:relative}
+.local-item .stamp{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
+  color:var(--green);border:1px solid var(--green);border-radius:4px;display:inline-block;padding:3px 8px;margin-bottom:14px;transform:rotate(-1.5deg);
+}
+.local-item h3{font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:22px;margin:0 0 8px}
+.local-item p{color:var(--ink-soft);font-size:15px;margin:0}
+
+/* ============ setup ============ */
+.setup-steps{counter-reset:step;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.step{background:var(--white);border:1px solid var(--hairline);border-radius:var(--radius);padding:24px;position:relative}
+.step .no{font-family:var(--font-mono);font-size:13px;color:var(--red);font-weight:600;display:block;margin-bottom:10px;letter-spacing:.08em}
+.step h3{font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:22px;margin:0 0 8px}
+.step p{color:var(--ink-soft);font-size:15px;margin:0 0 14px}
+.step .note{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);letter-spacing:.03em;border-top:1px solid var(--rule);padding-top:12px;margin:0}
+
+/* ============ cta band ============ */
+.cta-band{background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:56px 40px;text-align:center;position:relative;overflow:hidden}
+.cta-band h2{font-family:var(--font-display);font-weight:900;text-transform:uppercase;font-size:clamp(36px,5.5vw,60px);line-height:.95;margin:0 0 16px;text-wrap:balance}
+.cta-band p{color:#cfc7b0;max-width:52ch;margin:0 auto 28px;font-size:18px}
+.cta-band .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.cta-band .btn-ghost{border-color:var(--paper);color:var(--paper)}
+.cta-band .btn-ghost:hover{background:var(--paper);color:var(--ink)}
+
+/* ============ footer ============ */
+footer{border-top:1px solid var(--hairline);padding:36px 0 48px;margin-top:40px}
+.foot{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;justify-content:space-between}
+.foot .brand .name{font-size:20px}
+.foot-links{display:flex;gap:18px;flex-wrap:wrap}
+.foot-links a{font-family:var(--font-mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none}
+.foot-links a:hover{color:var(--ink)}
+.foot-note{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);margin-top:18px}
+
+@media (max-width:760px){
+  .hero{padding:40px 0 12px}
+  .dep-grid{grid-template-columns:1fr}
+  .dep-tabs{display:flex;border-right:none;border-bottom:1px solid var(--hairline);overflow-x:auto}
+  .dep-tab{white-space:nowrap;width:auto}
+  .cue td{padding:11px 12px}
+  .cue th{padding:12px}
+  .cue .at{display:none}
+  .mast{padding:14px 18px;gap:12px}
+  .brand .name{font-size:21px}
+  .cta-band{padding:44px 22px}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .stamp-fresh{animation:none}
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!--
+THESIS: One book coordinates every department of a role, and the Command Center is that book — this page refuses the dark-dashboard "control room" cliché and the generic hero-card SaaS layout for the working paper of a stage manager, where every live tool is a cue line on one sheet.
+OWN-WORLD: Warm stock paper, ink hairlines, tabbed divider rails, department dots (blue=email, green=projects, amber=design), and the red STANDBY/GO call lamp. Display face Big Shoulders for the production-poster voice, IBM Plex Mono for cue numbers, stamps, and the call log. Status is stamped, never a chart.
+STORY: A visitor understands the center is one book that wires their real tools (Trello/Monday, email, Canva) behind a local AI core, believes it is private and role-agnostic, and acts by wiring their first book (setup + docs).
+FIRST VIEWPORT: Masthead "COMMAND CENTER" with divider tabs; headline "RUN YOUR WHOLE ROLE FROM ONE BOOK" over the open prompt book for PROJECT: LAUNCH — a cue sheet (CUE/DEPT/ACTION/STATUS/AT) where one row is lit GO with a RUN control, a stamp log and a "synthetic demo" tag below.
+FORM: Stage manager's prompt book, position 6/7 of the grounded list, seed key ed8bce8d.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+
+<header class="mast">
+  <a class="brand" href="#top" aria-label="Command Center home">
+    <span class="name">Command Center</span>
+    <span class="sub">One core · any role · all your tools</span>
+  </a>
+  <nav aria-label="Sections">
+    <a class="tab" href="#departments">Departments</a>
+    <a class="tab" href="#roles">Roles</a>
+    <a class="tab" href="#private">Private</a>
+    <a class="tab" href="#setup">Setup</a>
+  </nav>
+  <a class="btn btn-primary" href="#setup">Open your book</a>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <div class="lede">
+      <h1>Run your whole role from <em>one book</em>.</h1>
+      <p class="sub">The Command Center puts a private AI at your desk and wires it to the tools you already use — tasks, email, design — through MCP. Pick a role, connect your tools, and run a workflow end to end instead of hopping between tabs.</p>
+      <p class="proof">Local core · your keys · your data — nothing leaves your machine.</p>
+    </div>
+
+    <div class="book" aria-label="Open prompt book for project launch">
+      <div class="book-top">
+        <span class="book-title">Prompt book · Project: Launch</span>
+        <span class="book-tag">PM profile</span>
+        <span class="book-tag">MCP · 4 connected</span>
+        <span class="stamp-demo">Synthetic demo</span>
+      </div>
+      <table class="cue">
+        <thead>
+          <tr>
+            <th scope="col">Cue</th>
+            <th scope="col">Dept</th>
+            <th scope="col">Action</th>
+            <th scope="col">Status</th>
+            <th scope="col">At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="at" aria-hidden="false">Q-01</td>
+            <td class="dept"><span class="dot dot-email"></span>Email</td>
+            <td class="act">Draft kickoff email <span class="tool">→ Gmail drafts</span></td>
+            <td><span class="status st-standby">Standby</span></td>
+            <td class="at">09:00</td>
+          </tr>
+          <tr class="active">
+            <td>Q-02</td>
+            <td class="dept"><span class="dot dot-projects"></span>Projects</td>
+            <td class="act">Create sprint board <span class="tool">→ Trello</span></td>
+            <td><span class="status st-go" id="status-go">Go</span> <button class="run" type="button" data-stamp="card “Design review” created · list “Week 1” · due Fri · Trello synced.">Run cue</button></td>
+            <td class="at">09:05</td>
+          </tr>
+          <tr>
+            <td>Q-03</td>
+            <td class="dept"><span class="dot dot-projects"></span>Projects</td>
+            <td class="act">Sync due-today <span class="tool">→ Monday + mail</span></td>
+            <td><span class="status st-hold">Hold</span></td>
+            <td class="at">09:10</td>
+          </tr>
+          <tr>
+            <td>Q-04</td>
+            <td class="dept"><span class="dot dot-design"></span>Design</td>
+            <td class="act">Pull “Q3 Update” template <span class="tool">→ Canva</span></td>
+            <td><span class="status st-standby">Standby</span></td>
+            <td class="at">14:00</td>
+          </tr>
+          <tr>
+            <td>Q-05</td>
+            <td class="dept"><span class="dot dot-email"></span>Email</td>
+            <td class="act">Send newsletter <span class="tool">→ 48 subscribers</span></td>
+            <td><span class="status st-standby">Standby</span></td>
+            <td class="at">14:30</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="log" aria-live="polite"><span class="prompt">&gt; STANDBY</span> <span class="line">Projects dept: sprint board found in Trello.</span><br>
+      <span class="prompt">&gt; GO</span> <span class="line">card “Design review” created · list “Week 1” · due Fri.</span></p>
+    </div>
+
+    <div style="text-align:center;margin-top:22px">
+      <a class="btn btn-ink" href="#setup">Wire your first book · about 15 minutes</a>
+    </div>
+  </div>
+</section>
+
+<section id="departments" aria-label="Departments">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>One book calls every department.</h2>
+      <p>Each connected tool becomes a department in the book. Skills turn a plain request into a rehearsed cue: list a board, draft the email, pull the template, then show you the line before it ships.</p>
+    </div>
+    <div class="dep-grid" role="tablist" aria-label="Departments">
+      <div class="dep-tabs" role="presentation">
+        <button class="dep-tab" role="tab" aria-selected="true" aria-controls="dep-email" data-dep="email"><span class="num">01</span> Email</button>
+        <button class="dep-tab" role="tab" aria-selected="false" aria-controls="dep-projects" data-dep="projects"><span class="num">02</span> Projects</button>
+        <button class="dep-tab" role="tab" aria-selected="false" aria-controls="dep-design" data-dep="design"><span class="num">03</span> Design</button>
+      </div>
+      <div>
+        <div class="dep-panel active" id="dep-email" role="tabpanel" aria-labelledby="email">
+          <p class="who">Skill: <strong>email:write_and_send</strong></p>
+          <h3 id="email">Email department</h3>
+          <p>The email skill drafts in your voice, reviews before it touches an outbox, and learns from the drafts you keep. Drafts sit in your mail app until you say GO.</p>
+          <span class="mcp-status">MCP · email — connected</span>
+          <ul class="flow">
+            <li><span class="q">Q-01</span><span class="t">Say what you need: “kickoff email to the design team, project timeline attached.”</span></li>
+            <li><span class="q">Q-02</span><span class="t">The skill writes it to Gmail drafts, never sends unprompted.</span></li>
+            <li><span class="q">Q-03</span><span class="t">You edit, then hit GO, or it stays a draft.</span></li>
+          </ul>
+        </div>
+        <div class="dep-panel" id="dep-projects" role="tabpanel" aria-labelledby="projects">
+          <p class="who">Skill: <strong>project:sync_overview</strong></p>
+          <h3 id="projects">Projects department</h3>
+          <p>Read and write Trello or Monday through MCP, with no copy-paste and no manual card surgery. The center keeps one running overview of what is due, who owns it, and what blocks it.</p>
+          <span class="mcp-status">MCP · trello + monday · connected</span>
+          <ul class="flow">
+            <li><span class="q">Q-01</span><span class="t">“Pull this week’s cards from Launch, list them by status.”</span></li>
+            <li><span class="q">Q-02</span><span class="t">Boards and lists update live through the MCP server.</span></li>
+            <li><span class="q">Q-03</span><span class="t">“Create a card ‘Design review’ on Week 1” lands in Trello, assigned and dated.</span></li>
+          </ul>
+        </div>
+        <div class="dep-panel" id="dep-design" role="tabpanel" aria-labelledby="design">
+          <p class="who">Skill: <strong>newsletter:design_and_send</strong></p>
+          <h3 id="design">Design department</h3>
+          <p>Pull an existing Canva template, edit the date and hero through the Canva MCP, preview, then hand the finished newsletter to the email department. One request, whole workflow.</p>
+          <span class="mcp-status">MCP · canva · connected</span>
+          <ul class="flow">
+            <li><span class="q">Q-01</span><span class="t">“Design a newsletter from my ‘Q3 Update’ template.”</span></li>
+            <li><span class="q">Q-02</span><span class="t">Template loads, fields edited in your brand, previewed.</span></li>
+            <li><span class="q">Q-03</span><span class="t">Emailed via the email department, or saved as a draft first.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roles" aria-label="Roles">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>The book is role-agnostic. You bring the role.</h2>
+      <p>Same core, same wiring, different tabs. Project manager today, founder tomorrow. Swap the profile, keep every connected tool.</p>
+    </div>
+    <div class="role-rack">
+      <div class="role-tabs" role="tablist" aria-label="Role profiles">
+        <button class="role-tab" role="tab" aria-selected="true" aria-controls="role-pm">Project manager</button>
+        <button class="role-tab" role="tab" aria-selected="false" aria-controls="role-founder">Founder</button>
+        <button class="role-tab" role="tab" aria-selected="false" aria-controls="role-designer">Designer</button>
+        <button class="role-tab" role="tab" aria-selected="false" aria-controls="role-ops">Ops</button>
+      </div>
+      <div>
+        <div class="role-panel active" id="role-pm" role="tabpanel">
+          <h3>Project manager</h3>
+          <p class="same-core">+ same core · same tools · different tabs</p>
+          <p>Boards, email, and newsletters on one cue sheet. Meetings become tracked cards with owners and due dates; the daily brief gathers email and tasks into a single “what’s today.”</p>
+          <div class="role-stack"><span class="role-chip">Trello</span><span class="role-chip">Monday</span><span class="role-chip">Email</span><span class="role-chip">Canva</span><span class="role-chip">Daily brief</span></div>
+        </div>
+        <div class="role-panel" id="role-founder" role="tabpanel">
+          <h3>Founder</h3>
+          <p class="same-core">+ same core · same tools · different tabs</p>
+          <p>CRM, pipeline, and inbox wired to the same local core. Delegate the follow-up, not the judgment. Every action is a line you approve before it runs.</p>
+          <div class="role-stack"><span class="role-chip">CRM</span><span class="role-chip">Email</span><span class="role-chip">Projects</span><span class="role-chip">Docs</span></div>
+        </div>
+        <div class="role-panel" id="role-designer" role="tabpanel">
+          <h3>Designer</h3>
+          <p class="same-core">+ same core · same tools · different tabs</p>
+          <p>Canva templates, brand assets, and client handoffs in one book. Pull a template, swap the copy, send the review link — without leaving the desk.</p>
+          <div class="role-stack"><span class="role-chip">Canva</span><span class="role-chip">Email</span><span class="role-chip">Brand files</span><span class="role-chip">Feedback</span></div>
+        </div>
+        <div class="role-panel" id="role-ops" role="tabpanel">
+          <h3>Ops</h3>
+          <p class="same-core">+ same core · same tools · different tabs</p>
+          <p>Repeated runbooks become one-tap cues. Status, checklists, and comms synchronized from a single overview that keeps the state of everything.</p>
+          <div class="role-stack"><span class="role-chip">Projects</span><span class="role-chip">Email</span><span class="role-chip">Runbooks</span><span class="role-chip">Calendar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="private" aria-label="Private by default">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Your book stays in your drawer.</h2>
+      <p>No account wall, no cloud inbox you didn’t choose. The core runs locally and your tool connections are yours.</p>
+    </div>
+    <div class="local-grid">
+      <div class="local-item">
+        <span class="stamp">By design</span>
+        <h3>Local core</h3>
+        <p>The AI that runs your desk lives on your machine — models, context, and decisions stay put.</p>
+      </div>
+      <div class="local-item">
+        <span class="stamp">By design</span>
+        <h3>Your keys, local</h3>
+        <p>Tool connections via MCP keep your API keys on your machine. Nothing is proxied through a stranger’s server.</p>
+      </div>
+      <div class="local-item">
+        <span class="stamp">By design</span>
+        <h3>Runs offline</h3>
+        <p>Core work keeps working without a connection. Only the tools you actually touch reach the network.</p>
+      </div>
+      <div class="local-item">
+        <span class="stamp">By design</span>
+        <h3>Approve before it runs</h3>
+        <p>Every cue is a draft until you call GO. The book shows you the line before anything ships.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="setup" aria-label="Setup">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Open your book in three cues.</h2>
+      <p>A guided setup wires your profile. No code required, keys stay local.</p>
+    </div>
+    <div class="setup-steps">
+      <div class="step">
+        <span class="no">Cue 01</span>
+        <h3>Install the core</h3>
+        <p>Jan runs your center locally. Pick a model, launch the desk.</p>
+        <p class="note">jan.ai · ~5 minutes · free &amp; open source</p>
+      </div>
+      <div class="step">
+        <span class="no">Cue 02</span>
+        <h3>Wire your tools</h3>
+        <p>Connect Trello, Monday, email, and Canva through MCP. Four “connected” lights, done.</p>
+        <p class="note">MCP hub · your keys · ~10 minutes</p>
+      </div>
+      <div class="step">
+        <span class="no">Cue 03</span>
+        <h3>Pick your role</h3>
+        <p>Load the profile — the right skills and tabs appear. Swap it any day, same wiring.</p>
+        <p class="note">Profile config · roles are swappable</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta-band">
+      <h2>Stop running tabs.<br>Run the show.</h2>
+      <p>One core. Any role. All your tools — private on your machine. Open your first prompt book tonight.</p>
+      <div class="btns">
+        <a class="btn btn-primary" href="docs/PRD.md">Read the product spec</a>
+        <a class="btn btn-ghost" href="docs/SETUP_GUIDE.md">Start the setup guide</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div class="brand">
+        <span class="name">Command Center</span>
+        <span class="sub">One core · any role · all your tools</span>
+      </div>
+      <div class="foot-links">
+        <a href="docs/PRD.md">Product spec</a>
+        <a href="docs/SETUP_GUIDE.md">Setup guide</a>
+        <a href="#departments">Departments</a>
+        <a href="#roles">Roles</a>
+      </div>
+    </div>
+    <p class="foot-note">Local-first by default. Demo book shown is synthetic. Replace it with your own boards and templates.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function tabify(tabs, panels, storageKey){
+    var tabEls = Array.prototype.slice.call(tabs);
+    tabEls.forEach(function(tab){
+      tab.addEventListener("click", function(){
+        tabEls.forEach(function(t){ t.setAttribute("aria-selected", t === tab ? "true" : "false"); });
+        panels.forEach(function(p){
+          var on = p.id === tab.getAttribute("aria-controls");
+          p.classList.toggle("active", on);
+          if(on && !reduceMotion){ p.style.animation = "stampin .3s cubic-bezier(.16,1,.3,1)"; }
+        });
+      });
+    });
+  }
+  tabify(
+    document.querySelectorAll(".dep-tab"),
+    document.querySelectorAll(".dep-panel")
+  );
+  tabify(
+    document.querySelectorAll(".role-tab"),
+    document.querySelectorAll(".role-panel")
+  );
+
+  var log = document.querySelector(".log .line");
+  var runBtn = document.querySelector(".run");
+  if(log && runBtn){
+    runBtn.addEventListener("click", function(){
+      var status = document.getElementById("status-go");
+      if(status){ status.textContent = "Go"; }
+      log.textContent = runBtn.getAttribute("data-stamp")
+        || "card “Design review” created · list “Week 1” · due Fri · Trello synced.";
+      runBtn.textContent = "Go again";
+    });
+  }
+})();
+</script>
+</body>
+</html>
